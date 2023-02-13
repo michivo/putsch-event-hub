@@ -2,5 +2,8 @@
     "serviceAccount": "src/keys/serviceAccountFileName.json",
     "server": {
         "port": 31403
+    },
+    "collectionNames": {
+        "events": "events"
     }
 }

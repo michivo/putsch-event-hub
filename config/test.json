@@ -1,6 +1,6 @@
 {
     "collectionNames": {
-        "products": "products_test"
+        "events": "events"
     },
     "serviceAccount": "src/keys/service-account.json",
     "server": {

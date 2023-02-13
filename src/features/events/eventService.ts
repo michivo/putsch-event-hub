@@ -12,8 +12,9 @@ class EventService {
         const existingSensorData = await this.getBySensorId(event.sensorId);
         let dao: EventDAO;
         if (existingSensorData) {
-            dao = this.mapToDao(event, existingSensorData!.eventId);
-            await this.dataContext.events.doc(existingSensorData!.eventId).set(dao);
+            const sensorData = existingSensorData as EventDAO;
+            dao = this.mapToDao(event, sensorData.eventId);
+            await this.dataContext.events.doc(sensorData.eventId).set(dao);
         }
         else {
             dao = this.mapToDao(event, uuidv4());
@@ -45,9 +46,7 @@ class EventService {
         }
     }
 
-    private mapToDao = (
-        event: Event, id = ''
-    ): EventDAO => {
+    private mapToDao = (event: Event, id = ''): EventDAO => {
         return {
             eventId: id,
             playerId: event.playerId,
@@ -56,9 +55,7 @@ class EventService {
         };
     };
 
-    private mapToDto = (
-        event: EventDAO, id = ''
-    ): Event => {
+    private mapToDto = (event: EventDAO): Event => {
         return {
             playerId: event.playerId,
             sensorId: event.sensorId,

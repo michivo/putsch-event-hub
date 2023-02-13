@@ -1,0 +1,9 @@
+{
+    "collectionNames": {
+        "products": "products_test"
+    },
+    "serviceAccount": "src/keys/service-account.json",
+    "server": {
+        "port": 31401
+    }
+}

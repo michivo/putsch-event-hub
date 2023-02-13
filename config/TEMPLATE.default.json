@@ -1,0 +1,6 @@
+{
+    "serviceAccount": "src/keys/serviceAccountFileName.json",
+    "server": {
+        "port": 31403
+    }
+}

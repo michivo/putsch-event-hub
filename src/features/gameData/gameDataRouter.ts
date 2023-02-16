@@ -24,7 +24,11 @@ const eventService = new GameDataService();
  *         type: array
  *         items:
  *           type: string
- *
+ */
+
+/**
+ * @openapi
+ * definitions:
  *   Quest:
  *     properties:
  *       id:
@@ -62,7 +66,11 @@ const eventService = new GameDataService();
  *       - parallel
  *       - cooldownTimeMinutes
  *       - stages
- *
+ */
+
+/**
+ * @openapi
+ * definitions:
  *   QuestStage:
  *     properties:
  *       triggerType:
@@ -83,13 +91,14 @@ const eventService = new GameDataService();
  *         type: string
  */
 
-/*
+/**
  * @openapi
  * tags:
  *   name: GameData
  *   description: For getting/manipulating game data
  */
-/*
+
+/**
  * @openapi
  * /api/v1/game-data/players:
  *   get:

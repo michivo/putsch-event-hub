@@ -1,6 +1,6 @@
 import firestore from './firestore';
 import config from 'config';
-import { EventDAO } from '../../typings/eventDAO';
+import { EventDAO } from '../../typings/event';
 
 interface DataContext {
     events: FirebaseFirestore.CollectionReference<EventDAO>;

@@ -109,10 +109,10 @@ class Server {
         });
 
         this._server.on('connection', (socket) => {
-            const client = socket.remoteAddress + ':' + socket.remotePort;
-            this._logger.info('Client established connection: ' + client);
+            const client = `${socket.remoteAddress}:${socket.remotePort}`;
+            this._logger.info(`Client established connection: ${client}`);
             socket.on('close', () => {
-                this._logger.info('Socket ' + client + ' closed connection');
+                this._logger.info(`Socket ${client} closed connection`);
             });
         });
 

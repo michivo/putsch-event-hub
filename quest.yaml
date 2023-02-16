@@ -1,0 +1,100 @@
+openapi: 3.0.0
+info:
+  title: Converted from quest.yaml with typeconv
+  version: '1'
+  x-id: quest.yaml
+  x-comment: >-
+    Generated from quest.ts by core-types-json-schema
+    (https://github.com/grantila/core-types-json-schema) on behalf of typeconv
+    (https://github.com/grantila/typeconv)
+paths: {}
+components:
+  schemas:
+    Quest:
+      properties:
+        id:
+          title: Quest.id
+          type: number
+        subNumber:
+          title: Quest.subNumber
+          type: number
+        state:
+          title: Quest.state
+          type: string
+        name:
+          title: Quest.name
+          type: string
+        description:
+          title: Quest.description
+          type: string
+        phase:
+          items:
+            title: Quest.phase.[]
+            type: number
+          title: Quest.phase
+          type: array
+        repeatable:
+          title: Quest.repeatable
+          type: boolean
+        parallel:
+          title: Quest.parallel
+          type: boolean
+        cooldownTimeMinutes:
+          title: Quest.cooldownTimeMinutes
+          type: number
+        stages:
+          items:
+            $ref: '#/components/schemas/QuestStage'
+            title: Quest.stages.[]
+          title: Quest.stages
+          type: array
+      required:
+        - id
+        - subNumber
+        - state
+        - name
+        - description
+        - phase
+        - repeatable
+        - parallel
+        - cooldownTimeMinutes
+        - stages
+      additionalProperties: false
+      title: Quest
+      type: object
+    QuestStage:
+      properties:
+        triggerType:
+          title: QuestStage.triggerType
+          type: string
+        triggerIds:
+          items:
+            title: QuestStage.triggerIds.[]
+            type: string
+          title: QuestStage.triggerIds
+          type: array
+        nonTriggerIds:
+          items:
+            title: QuestStage.nonTriggerIds.[]
+            type: string
+          title: QuestStage.nonTriggerIds
+          type: array
+        text:
+          title: QuestStage.text
+          type: string
+        backupTimeSeconds:
+          title: QuestStage.backupTimeSeconds
+          type: number
+        backupTextId:
+          title: QuestStage.backupTextId
+          type: string
+      required:
+        - triggerType
+        - triggerIds
+        - nonTriggerIds
+        - text
+        - backupTimeSeconds
+        - backupTextId
+      additionalProperties: false
+      title: QuestStage
+      type: object

@@ -1,7 +1,8 @@
 {
     "serviceAccount": "src/keys/serviceAccountFileName.json",
+    "spreadsheetId": "TODO",
     "server": {
-        "port": 31403
+        "port": 31401
     },
     "collectionNames": {
         "events": "events"

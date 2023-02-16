@@ -20,6 +20,8 @@ const eventService = new EventService(database);
  *         type: string
  *       playerId:
  *         type: string
+ *       eventDateUtc:
+ *         type: string
  *       value:
  *         - type: string
  *         - type: integer

@@ -1,85 +1,88 @@
 {
   "name": "putsch-event-hub",
   "version": "0.1.0",
-  "description": "Project containing an API for product management.",
+  "description": "Putsch event data.",
   "main": "./dist/src/main.js",
   "scripts": {
-      "clean": "rimraf dist/*",
-      "start": "node .",
-      "dev": "cross-env NODE_ENV=development nodemon ./src/main.ts",
-      "lint": "eslint . --ext .ts",
-      "tsc": "tsc",
-      "build": "npm-run-all clean lint tsc copyfiles",
-      "copyfiles": "copyfiles src/features/**/*.json dist/"
+    "clean": "rimraf dist/*",
+    "start": "node .",
+    "dev": "cross-env NODE_ENV=development nodemon ./src/main.ts",
+    "lint": "eslint . --ext .ts",
+    "tsc": "tsc",
+    "build": "npm-run-all clean lint tsc copyfiles",
+    "copyfiles": "copyfiles src/features/**/*.json dist/ && copyfiles src/keys/*.json dist/",
+    "maketypes": "cd src/typings && typeconv -f ts -t oapi *.ts"
   },
   "repository": {
-      "type": "git",
-      "url": "https://github.com/michivo/putsch-event-hub.git"
+    "type": "git",
+    "url": "https://github.com/michivo/putsch-event-hub.git"
   },
   "keywords": [],
   "contributors": [
-      {
-          "name": "Michael Faschinger",
-          "email": "michivo@gmail.com",
-          "url": "https://github.com/michivo"
-      }
+    {
+      "name": "Michael Faschinger",
+      "email": "michivo@gmail.com",
+      "url": "https://github.com/michivo"
+    }
   ],
   "license": "ISC",
   "dependencies": {
-      "@awaitjs/express": "^0.8.0",
-      "axios": "^0.26.1",
-      "config": "^3.3.6",
-      "cors": "^2.8.5",
-      "express": "^4.17.1",
-      "express-validator": "^6.14.0",
-      "firebase-admin": "^10.0.2",
-      "jsonwebtoken": "^8.5.1",
-      "sinon": "^13.0.1",
-      "swagger-jsdoc": "^6.1.0",
-      "swagger-ui-express": "^4.3.0",
-      "uuid": "^8.3.2"
+    "@awaitjs/express": "^0.8.0",
+    "axios": "^0.26.1",
+    "config": "^3.3.6",
+    "cors": "^2.8.5",
+    "express": "^4.17.1",
+    "express-validator": "^6.14.0",
+    "firebase-admin": "^10.0.2",
+    "googleapis": "^111.0.0",
+    "jsonwebtoken": "^8.5.1",
+    "sinon": "^13.0.1",
+    "swagger-jsdoc": "^6.1.0",
+    "swagger-ui-express": "^4.3.0",
+    "uuid": "^8.3.2"
   },
   "devDependencies": {
-      "@types/config": "^0.0.41",
-      "@types/cors": "^2.8.10",
-      "@types/express": "^4.17.11",
-      "@types/jest": "^27.4.1",
-      "@types/jsonwebtoken": "^8.5.8",
-      "@types/sinon": "^10.0.11",
-      "@types/supertest": "^2.0.11",
-      "@types/swagger-jsdoc": "^6.0.1",
-      "@types/swagger-ui-express": "^4.1.3",
-      "@types/uuid": "^8.3.4",
-      "@typescript-eslint/eslint-plugin": "^5.16.0",
-      "@typescript-eslint/parser": "^5.16.0",
-      "copyfiles": "^2.4.1",
-      "cross-env": "^7.0.3",
-      "eslint": "^8.11.0",
-      "jest": "^27.0.4",
-      "nodemon": "^2.0.7",
-      "npm-run-all": "^4.1.5",
-      "rimraf": "^3.0.2",
-      "supertest": "^6.1.3",
-      "ts-jest": "^27.0.2",
-      "ts-mockito": "^2.6.1",
-      "ts-node": "^10.7.0",
-      "typescript": "^4.2.4"
+    "@types/config": "^0.0.41",
+    "@types/cors": "^2.8.10",
+    "@types/express": "^4.17.11",
+    "@types/jest": "^27.4.1",
+    "@types/jsonwebtoken": "^8.5.8",
+    "@types/sinon": "^10.0.11",
+    "@types/supertest": "^2.0.11",
+    "@types/swagger-jsdoc": "^6.0.1",
+    "@types/swagger-ui-express": "^4.1.3",
+    "@types/uuid": "^8.3.4",
+    "@typescript-eslint/eslint-plugin": "^5.16.0",
+    "@typescript-eslint/parser": "^5.16.0",
+    "copyfiles": "^2.4.1",
+    "cross-env": "^7.0.3",
+    "eslint": "^8.11.0",
+    "jest": "^27.0.4",
+    "nodemon": "^2.0.7",
+    "npm-run-all": "^4.1.5",
+    "rimraf": "^3.0.2",
+    "supertest": "^6.1.3",
+    "ts-jest": "^27.0.2",
+    "ts-mockito": "^2.6.1",
+    "ts-node": "^10.7.0",
+    "typeconv": "^2.1.0",
+    "typescript": "^4.2.4"
   },
   "jest": {
-      "moduleFileExtensions": [
-          "ts",
-          "js"
-      ],
-      "transform": {
-          "^.+\\.(ts|tsx)$": "ts-jest"
-      },
-      "globals": {
-          "ts-jest": {
-              "tsconfig": "tsconfig.json"
-          }
-      },
-      "testMatch": [
-          "**/tests/**/*.+(ts)"
-      ]
+    "moduleFileExtensions": [
+      "ts",
+      "js"
+    ],
+    "transform": {
+      "^.+\\.(ts|tsx)$": "ts-jest"
+    },
+    "globals": {
+      "ts-jest": {
+        "tsconfig": "tsconfig.json"
+      }
+    },
+    "testMatch": [
+      "**/tests/**/*.+(ts)"
+    ]
   }
 }

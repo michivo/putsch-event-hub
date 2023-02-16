@@ -5,12 +5,13 @@ import swaggerJSDoc from 'swagger-jsdoc';
 
 import healthRouter from './features/health/healthRouter';
 import eventRouter from './features/events/eventRouter';
+import gameDataRouter from './features/gameData/gameDataRouter';
 
 const options: swaggerJSDoc.OAS3Options = {
     definition: {
         openapi: '3.0.0',
         info: {
-            title: 'Product Service API',
+            title: 'Event Service API',
             version: '1.0.0',
         },
         components: {
@@ -18,10 +19,10 @@ const options: swaggerJSDoc.OAS3Options = {
                 bearerAuth: {
                     type: 'http',
                     scheme: 'bearer',
-                    bearerFormat: 'JWT'
-                }
-            }
-        }
+                    bearerFormat: 'JWT',
+                },
+            },
+        },
     },
     // we need the ** glob here so the spec works with TS (https://github.com/Surnet/swagger-jsdoc/issues/168)
     apis: ['**/features/**/*Router.ts'], // files containing annotations as above
@@ -37,5 +38,6 @@ router.use('/api-docs', swaggerUi.serve, swaggerUi.setup(spec));
 
 router.use('/api/v1/health', healthRouter);
 router.use('/api/v1/events', eventRouter);
+router.use('/api/v1/game-data', gameDataRouter);
 
 export default router;

@@ -1,7 +1,7 @@
 import { uuidv4 } from '@firebase/util';
 import DataContext from '../../infrastructure/data/dataContext';
-import { Event } from '../../typings/event';
-import { EventDAO } from '../../typings/eventDAO';
+import { Event, EventDAO } from '../../typings/event';
+import { Timestamp } from '@google-cloud/firestore';
 
 class EventService {
     constructor(private dataContext: DataContext) {
@@ -10,6 +10,8 @@ class EventService {
 
     public upsertEvent = async (event: Event): Promise<EventDAO> => {
         const existingSensorData = await this.getBySensorId(event.sensorId);
+        this.setDateIfEmpty(event);
+
         let dao: EventDAO;
         if (existingSensorData) {
             const sensorData = existingSensorData as EventDAO;
@@ -33,6 +35,13 @@ class EventService {
         return events;
     };
 
+    private setDateIfEmpty(event: Event) {
+        if(!event.eventDateUtc) {
+            const now = new Date();
+            event.eventDateUtc = now.toISOString();
+        }
+    }
+
     private async getBySensorId(
         sensorId: string,
     ): Promise<EventDAO | undefined> {
@@ -51,7 +60,8 @@ class EventService {
             eventId: id,
             playerId: event.playerId,
             sensorId: event.sensorId,
-            value: event.value
+            value: event.value,
+            eventDateUtc: Timestamp.fromDate(new Date(event.eventDateUtc)),
         };
     };
 
@@ -59,7 +69,8 @@ class EventService {
         return {
             playerId: event.playerId,
             sensorId: event.sensorId,
-            value: event.value
+            value: event.value,
+            eventDateUtc: event.eventDateUtc.toDate().toISOString(),
         };
     };
 }

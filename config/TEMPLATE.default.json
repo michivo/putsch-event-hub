@@ -5,6 +5,7 @@
         "port": 31401
     },
     "collectionNames": {
-        "events": "events"
+        "events": "events",
+        "playerQuests": "playerQuests"
     }
 }

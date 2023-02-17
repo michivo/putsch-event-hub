@@ -4,9 +4,11 @@ import { validationResult } from 'express-validator';
 import { BadRequestError } from '../../infrastructure/errors';
 import EventService from './eventService';
 import { database } from '../../infrastructure/data/dataContext';
+import GameDataService from '../gameData/gameDataService';
 
 const router = decorateRouter(express.Router());
-const eventService = new EventService(database);
+const gameDataService = new GameDataService();
+const eventService = new EventService(database, gameDataService);
 
 /**
  * @openapi

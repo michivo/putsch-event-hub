@@ -36,6 +36,7 @@
     "firebase-admin": "^10.0.2",
     "googleapis": "^111.0.0",
     "jsonwebtoken": "^8.5.1",
+    "node-cache": "^5.1.2",
     "sinon": "^13.0.1",
     "swagger-jsdoc": "^6.1.0",
     "swagger-ui-express": "^4.3.0",

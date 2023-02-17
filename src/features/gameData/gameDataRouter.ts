@@ -3,7 +3,7 @@ import { decorateRouter } from '@awaitjs/express';
 import GameDataService from './gameDataService';
 
 const router = decorateRouter(express.Router());
-const eventService = new GameDataService();
+const gameDataService = new GameDataService();
 
 /**
  * @openapi
@@ -118,9 +118,8 @@ const eventService = new GameDataService();
  *               items:
  *                 $ref: '#/definitions/Player'
  */
-router.getAsync('/players',
-    async (_: express.Request, res: express.Response) => {
-    res.send(await eventService.getPlayers());
+router.getAsync('/players', async (_: express.Request, res: express.Response) => {
+    res.send(await gameDataService.getPlayers());
 });
 
 /**
@@ -131,6 +130,10 @@ router.getAsync('/players',
  *       - GameData
  *     produces:
  *       - application/json
+*     parameters:
+ *       - in: query
+ *         name: getAll
+ *         type: boolean
  *     description: Returns all players
  *     summary: Gets all players with id, current quest(s), ...
  *     responses:
@@ -143,10 +146,10 @@ router.getAsync('/players',
  *               items:
  *                 $ref: '#/definitions/Quest'
  */
-router.getAsync('/quests',
-    async (_: express.Request, res: express.Response) => {
-    res.send(await eventService.getQuests());
+router.getAsync('/quests', async (req: express.Request, res: express.Response) => {
+    const { getAll } = req.query;
+    const getAllQuests = typeof getAll === 'string' && getAll === 'true';
+    res.send(await gameDataService.getQuests(getAllQuests));
 });
-
 
 export default router;

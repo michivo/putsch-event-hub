@@ -44,7 +44,7 @@ const eventService = new EventService(database, gameDataService);
 /**
  * @openapi
  * definitions:
- *   QuestStage:
+ *   PlayerQuestStage:
  *     properties:
  *       triggerType:
  *         type: string
@@ -57,6 +57,10 @@ const eventService = new EventService(database, gameDataService);
  *       backupTimeSeconds:
  *         type: number
  *       backupTextId:
+ *         type: string
+ *       stageIndex:
+ *         type: number
+ *       name:
  *         type: string
  */
 
@@ -171,9 +175,9 @@ router.postAsync('/quests/startRequests', async (req: express.Request, res: expr
  *         content:
  *           application/json:
  *             schema:
- *               $ref: '#/definitions/QuestStage'
+ *               $ref: '#/definitions/PlayerQuestStage'
  */
-router.getAsync('/events/stage', async (req: express.Request, res: express.Response) => {
+router.getAsync('/stage', async (req: express.Request, res: express.Response) => {
     const { playerId } = req.query;
     console.log(`Getting stage info for ${playerId}`);
     if (playerId) {
@@ -187,7 +191,7 @@ router.getAsync('/events/stage', async (req: express.Request, res: express.Respo
     }
     else {
         res.status(400);
-        res.render('error', { error: 'PlayerId missing.' });
+        res.send('PlayerId missing.');
     }
 });
 

@@ -3,8 +3,7 @@ import DataContext from '../../infrastructure/data/dataContext';
 import { Event, EventDAO } from '../../typings/event';
 import { Timestamp } from '@google-cloud/firestore';
 import GameDataService from '../gameData/gameDataService';
-import { PlayerQuestDAO } from '../../typings/quest';
-import { QuestStage } from '../../../quest';
+import { PlayerQuestDAO, PlayerQuestStage } from '../../typings/quest';
 
 class EventService {
     constructor(private dataContext: DataContext, private gameData: GameDataService) {}
@@ -70,7 +69,7 @@ class EventService {
         }
     };
 
-    public getCurrentStage = async(playerId: string): Promise<QuestStage | undefined> => {
+    public getCurrentStage = async(playerId: string): Promise<PlayerQuestStage | undefined> => {
         const playerQuest = await this.dataContext.playerQuests.doc(playerId).get();
         if(!playerQuest.exists) {
             return undefined;
@@ -87,6 +86,8 @@ class EventService {
             text: questData.text,
             triggerIds: questData.triggerIds,
             triggerType: questData.triggerType,
+            stageIndex: questData.stageIndex,
+            name: questData.name,
         };
     };
 

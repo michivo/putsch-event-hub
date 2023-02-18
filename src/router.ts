@@ -33,7 +33,7 @@ function errorHandler (err: Error, _: express.Request, res: express.Response, ne
       return next(err);
     }
     res.status(500);
-    res.render('error', { error: err });
+    res.send(err);
   }
 
 

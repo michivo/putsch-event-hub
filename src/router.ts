@@ -30,10 +30,10 @@ const options: swaggerJSDoc.OAS3Options = {
 
 function errorHandler (err: Error, _: express.Request, res: express.Response, next: express.NextFunction) {
     if (res.headersSent) {
-      return next(err)
+      return next(err);
     }
-    res.status(500)
-    res.render('error', { error: err })
+    res.status(500);
+    res.render('error', { error: err });
   }
 
 

@@ -175,14 +175,19 @@ router.postAsync('/quests/startRequests', async (req: express.Request, res: expr
  */
 router.getAsync('/events/stage', async (req: express.Request, res: express.Response) => {
     const { playerId } = req.query;
-    if (typeof playerId === 'string') {
-        const stage = await eventService.getCurrentStage(playerId);
+    console.log(`Getting stage info for ${playerId}`);
+    if (playerId) {
+        const stage = await eventService.getCurrentStage(playerId?.toString());
         if (stage) {
             res.send(stage);
-        }
-        else {
+        } else {
             res.status(404);
+            res.send(`No stage for Player with id ${playerId} was found.`)
         }
+    }
+    else {
+        res.status(400);
+        res.render('error', { error: 'PlayerId missing.' });
     }
 });
 

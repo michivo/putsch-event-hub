@@ -59,6 +59,7 @@ class EventService {
             playerId: playerId,
             stageIndex: 0,
             questId: questId,
+            playlistName: '',
         };
         if (!querySnapshot.empty) {
             console.log(`Updating quest for player with id ${playerId}`);
@@ -88,6 +89,7 @@ class EventService {
             triggerType: questData.triggerType,
             stageIndex: questData.stageIndex,
             name: questData.name,
+            playlistName: questData.playlistName,
         };
     };
 
@@ -120,6 +122,8 @@ class EventService {
                     playerQuest.name = '---DONE---';
                     playerQuest.backupTextId = '';
                     playerQuest.backupTimeSeconds = -1;
+                    playerQuest.playlistName = '';
+                    playerQuest.playlistName = quest.stages[playerQuest.stageIndex].playlistName
                 }
                 else {
                     console.log(`Player ${playerQuest.playerId} has reached stage ${nextStageId + 1} of quest ${playerQuest.questId}`);
@@ -129,6 +133,7 @@ class EventService {
                     playerQuest.name = quest.stages[nextStageId].name;
                     playerQuest.backupTextId = quest.stages[nextStageId].backupTextId;
                     playerQuest.backupTimeSeconds = quest.stages[nextStageId].backupTimeSeconds;
+                    playerQuest.playlistName = quest.stages[playerQuest.stageIndex].playlistName
                 }
                 await this.dataContext.playerQuests.doc(playerQuest.playerId).set(playerQuest);
             }

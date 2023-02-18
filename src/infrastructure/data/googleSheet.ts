@@ -92,6 +92,7 @@ async function getQuests(): Promise<Quest[]> {
                 text: stageFields[6],
                 backupTimeSeconds: parseInt(stageFields[8]),
                 backupTextId: stageFields[9],
+                playlistName: stageFields[3],
             };
             quest.stages.push(stage);
         }

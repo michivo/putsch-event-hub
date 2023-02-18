@@ -112,9 +112,9 @@ class EventService {
             const playerQuest = results.docs[0].data();
             const quest = quests.find(q => q.id === playerQuest.questId);
             if(quest) {
-                const nextStageId = playerQuest.stageIndex + 1;
+                const nextStageIndex = playerQuest.stageIndex + 1;
                 playerQuest.text = quest.stages[playerQuest.stageIndex].text;
-                if(nextStageId >= quest.stages.length) {
+                if(nextStageIndex >= quest.stages.length) {
                     console.log(`Player ${playerQuest.playerId} has reached the final stage of quest ${playerQuest.questId}`);
                     playerQuest.stageIndex = -1;
                     playerQuest.triggerIds = [];
@@ -123,17 +123,17 @@ class EventService {
                     playerQuest.backupTextId = '';
                     playerQuest.backupTimeSeconds = -1;
                     playerQuest.playlistName = '';
-                    playerQuest.playlistName = quest.stages[playerQuest.stageIndex].playlistName
+                    playerQuest.playlistName = quest.stages[nextStageIndex - 1].playlistName;
                 }
                 else {
-                    console.log(`Player ${playerQuest.playerId} has reached stage ${nextStageId + 1} of quest ${playerQuest.questId}`);
-                    playerQuest.stageIndex = nextStageId;
-                    playerQuest.triggerIds = quest.stages[nextStageId].triggerIds;
-                    playerQuest.triggerType = quest.stages[nextStageId].triggerType;
-                    playerQuest.name = quest.stages[nextStageId].name;
-                    playerQuest.backupTextId = quest.stages[nextStageId].backupTextId;
-                    playerQuest.backupTimeSeconds = quest.stages[nextStageId].backupTimeSeconds;
-                    playerQuest.playlistName = quest.stages[playerQuest.stageIndex].playlistName
+                    console.log(`Player ${playerQuest.playerId} has reached stage ${nextStageIndex + 1} of quest ${playerQuest.questId}`);
+                    playerQuest.stageIndex = nextStageIndex;
+                    playerQuest.triggerIds = quest.stages[nextStageIndex].triggerIds;
+                    playerQuest.triggerType = quest.stages[nextStageIndex].triggerType;
+                    playerQuest.name = quest.stages[nextStageIndex].name;
+                    playerQuest.backupTextId = quest.stages[nextStageIndex].backupTextId;
+                    playerQuest.backupTimeSeconds = quest.stages[nextStageIndex].backupTimeSeconds;
+                    playerQuest.playlistName = quest.stages[nextStageIndex - 1].playlistName;
                 }
                 await this.dataContext.playerQuests.doc(playerQuest.playerId).set(playerQuest);
             }

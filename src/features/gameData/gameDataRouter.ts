@@ -79,10 +79,6 @@ const gameDataService = new GameDataService();
  *         items:
  *           type: string
  *         type: array
- *       nonTriggerIds:
- *         items:
- *           type: string
- *         type: array
  *       text:
  *         type: string
  *       backupTimeSeconds:
@@ -130,7 +126,7 @@ router.getAsync('/players', async (_: express.Request, res: express.Response) =>
  *       - GameData
  *     produces:
  *       - application/json
-*     parameters:
+ *     parameters:
  *       - in: query
  *         name: getAll
  *         type: boolean

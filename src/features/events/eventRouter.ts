@@ -29,6 +29,35 @@ const eventService = new EventService(database, gameDataService);
  *         - type: integer
  *         - type: number
  *         - type: boolean
+ *
+ *   StartQuestRequest:
+ *     required:
+ *       - playerId
+ *       - questId
+ *     properties:
+ *       playerId:
+ *         type: string
+ *       questId:
+ *         type: string
+ */
+
+/**
+ * @openapi
+ * definitions:
+ *   QuestStage:
+ *     properties:
+ *       triggerType:
+ *         type: string
+ *       triggerIds:
+ *         items:
+ *           type: string
+ *         type: array
+ *       text:
+ *         type: string
+ *       backupTimeSeconds:
+ *         type: number
+ *       backupTextId:
+ *         type: string
  */
 
 /**
@@ -63,14 +92,13 @@ const eventService = new EventService(database, gameDataService);
  *             schema:
  *               $ref: '#/definitions/Event'
  */
-router.postAsync('/',
-    async (req: express.Request, res: express.Response) => {
-        const errors = validationResult(req);
-        if (!errors.isEmpty()) {
-            throw new BadRequestError(JSON.stringify(errors));
-        }
+router.postAsync('/', async (req: express.Request, res: express.Response) => {
+    const errors = validationResult(req);
+    if (!errors.isEmpty()) {
+        throw new BadRequestError(JSON.stringify(errors));
+    }
 
-        res.send(await eventService.upsertEvent(req.body));
+    res.send(await eventService.upsertEvent(req.body));
 });
 
 /**
@@ -93,10 +121,69 @@ router.postAsync('/',
  *               items:
  *                 $ref: '#/definitions/Event'
  */
-router.getAsync('/',
-    async (_: express.Request, res: express.Response) => {
+router.getAsync('/', async (_: express.Request, res: express.Response) => {
     res.send(await eventService.get());
 });
 
+/**
+ * @openapi
+ * /api/v1/events/quests/startRequests:
+ *   post:
+ *     tags:
+ *       - Events
+ *     produces:
+ *       - application/json
+ *     requestBody:
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/definitions/StartQuestRequest'
+ *         required: true
+ *         description: Start Quest Request
+ *     description: Starts a quest for a player
+ *     summary: Starts a new quest for a player.
+ *     responses:
+ *       200:
+ *         description: OK
+ */
+router.postAsync('/quests/startRequests', async (req: express.Request, res: express.Response) => {
+    await eventService.startQuest(req.body.playerId, req.body.questId);
+    res.send('OK');
+});
+
+/**
+ * @openapi
+ * /api/v1/events/stage:
+ *   get:
+ *     tags:
+ *       - Events
+ *     produces:
+ *       - application/json
+ *     parameters:
+ *       - in: query
+ *         name: playerId
+ *         type: string
+ *     description: Returns player's current stage
+ *     summary: Gets current stage for player
+ *     responses:
+ *       200:
+ *         description: The player's current stage
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/definitions/QuestStage'
+ */
+router.getAsync('/events/stage', async (req: express.Request, res: express.Response) => {
+    const { playerId } = req.query;
+    if (typeof playerId === 'string') {
+        const stage = await eventService.getCurrentStage(playerId);
+        if (stage) {
+            res.send(stage);
+        }
+        else {
+            res.status(404);
+        }
+    }
+});
 
 export default router;

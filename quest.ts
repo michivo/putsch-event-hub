@@ -14,7 +14,6 @@ export interface Quest {
 export interface QuestStage {
     triggerType: string,
     triggerIds: string[],
-    nonTriggerIds: string[],
     text: string,
     backupTimeSeconds: number,
     backupTextId: string,

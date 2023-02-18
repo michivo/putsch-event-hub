@@ -65,27 +65,33 @@ async function getQuests(): Promise<Quest[]> {
     const result: Quest[] = [];
     rows = rows.slice(1);
     for (const row of rows) {
+        if(!row[0] || row[0].toString().trim() === '') {
+            continue;
+        }
         const quest: Quest = {
-            id: row[0],
+            id: row[0].toString(),
             subNumber: readSubNumber(row[1]),
-            cooldownTimeMinutes: row[8],
+            cooldownTimeMinutes: row[13],
             description: row[4],
-            name: row[3],
-            parallel: row[7] && row[7].toLowerCase().includes('y'),
+            name: row[4],
+            parallel: row[12] && row[12].toLowerCase().includes('y'),
             phase: readIntArray(row[5]),
-            repeatable: row[6] && row[6].toLowerCase().includes('y'),
+            repeatable: row[11] && row[11].toLowerCase().includes('y'),
             stages: [],
-            state: row[2],
+            state: row[5],
         };
-        for(let colIdx = 9; colIdx < row.length - 6; colIdx += 7) {
+        for(let colIdx = 14; colIdx <= row.length - 10; colIdx += 10) {
+            const stageFields = row.slice(colIdx, colIdx + 10);
+            if(stageFields.length < 9) {
+                break;
+            }
             const stage: QuestStage = {
-                triggerType: row[colIdx],
-                triggerIds: readStringArray(row[colIdx + 1]),
-                nonTriggerIds: readStringArray(row[colIdx + 2]),
-                name: row[colIdx + 4],
-                text: row[colIdx + 3],
-                backupTimeSeconds: parseInt(row[colIdx + 5]),
-                backupTextId: row[colIdx + 6],
+                triggerType: stageFields[0],
+                triggerIds: readStringArray(stageFields[1]),
+                name: stageFields[4],
+                text: stageFields[6],
+                backupTimeSeconds: parseInt(stageFields[8]),
+                backupTextId: stageFields[9],
             };
             quest.stages.push(stage);
         }
@@ -94,7 +100,7 @@ async function getQuests(): Promise<Quest[]> {
     return result;
 }
 
-function readStringArray(val: any) {
+function readStringArray(val: string | undefined | null) {
     if(!val) {
         return [];
     }
@@ -102,7 +108,7 @@ function readStringArray(val: any) {
     return val.split(',').map((s: string) => s.trim());
 }
 
-function readIntArray(val: any) {
+function readIntArray(val: number | string | null | undefined) {
     if(!val) {
         return [];
     }

@@ -28,6 +28,15 @@ const options: swaggerJSDoc.OAS3Options = {
     apis: ['**/features/**/*Router.ts'], // files containing annotations as above
 };
 
+function errorHandler (err: Error, _: express.Request, res: express.Response, next: express.NextFunction) {
+    if (res.headersSent) {
+      return next(err)
+    }
+    res.status(500)
+    res.render('error', { error: err })
+  }
+
+
 const spec = swaggerJSDoc(options);
 
 // Create async router
@@ -39,5 +48,7 @@ router.use('/api-docs', swaggerUi.serve, swaggerUi.setup(spec));
 router.use('/api/v1/health', healthRouter);
 router.use('/api/v1/events', eventRouter);
 router.use('/api/v1/game-data', gameDataRouter);
+
+router.use(errorHandler);
 
 export default router;

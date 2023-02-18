@@ -73,12 +73,6 @@ components:
             type: string
           title: QuestStage.triggerIds
           type: array
-        nonTriggerIds:
-          items:
-            title: QuestStage.nonTriggerIds.[]
-            type: string
-          title: QuestStage.nonTriggerIds
-          type: array
         text:
           title: QuestStage.text
           type: string
@@ -91,7 +85,6 @@ components:
       required:
         - triggerType
         - triggerIds
-        - nonTriggerIds
         - text
         - backupTimeSeconds
         - backupTextId

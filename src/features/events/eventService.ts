@@ -4,6 +4,7 @@ import { Event, EventDAO } from '../../typings/event';
 import { Timestamp } from '@google-cloud/firestore';
 import GameDataService from '../gameData/gameDataService';
 import { PlayerQuestDAO } from '../../typings/quest';
+import { QuestStage } from '../../../quest';
 
 class EventService {
     constructor(private dataContext: DataContext, private gameData: GameDataService) {}
@@ -27,7 +28,7 @@ class EventService {
         return dao;
     };
 
-    public startQuest = async (playerId: string, questId: number): Promise<void> => {
+    public startQuest = async (playerId: string, questId: string): Promise<void> => {
         const quests = await this.gameData.getQuests();
         const quest = quests.find((q) => q.id === questId);
         if (!quest) {
@@ -54,7 +55,6 @@ class EventService {
             backupTimeSeconds: firstStage.backupTimeSeconds,
             name: firstStage.name,
             text: '',
-            nonTriggerIds: firstStage.nonTriggerIds,
             triggerIds: firstStage.triggerIds,
             triggerType: firstStage.triggerType,
             playerId: playerId,
@@ -68,6 +68,26 @@ class EventService {
             console.log(`Creating quest for player with id ${playerId}`);
             await this.dataContext.playerQuests.doc(playerId).create(playerQuest);
         }
+    };
+
+    public getCurrentStage = async(playerId: string): Promise<QuestStage | undefined> => {
+        const playerQuest = await this.dataContext.playerQuests.doc(playerId).get();
+        if(!playerQuest.exists) {
+            return undefined;
+        }
+
+        const questData = playerQuest.data();
+        if(!questData) {
+            return undefined;
+        }
+
+        return {
+            backupTextId: questData.backupTextId,
+            backupTimeSeconds: questData.backupTimeSeconds,
+            text: questData.text,
+            triggerIds: questData.triggerIds,
+            triggerType: questData.triggerType,
+        };
     };
 
     private updateGameData = async (event: Event): Promise<void> => {
@@ -96,7 +116,6 @@ class EventService {
                     playerQuest.stageIndex = -1;
                     playerQuest.triggerIds = [];
                     playerQuest.triggerType = '';
-                    playerQuest.nonTriggerIds = [];
                     playerQuest.name = '---DONE---';
                     playerQuest.backupTextId = '';
                     playerQuest.backupTimeSeconds = -1;
@@ -106,7 +125,6 @@ class EventService {
                     playerQuest.stageIndex = nextStageId;
                     playerQuest.triggerIds = quest.stages[nextStageId].triggerIds;
                     playerQuest.triggerType = quest.stages[nextStageId].triggerType;
-                    playerQuest.nonTriggerIds = quest.stages[nextStageId].nonTriggerIds;
                     playerQuest.name = quest.stages[nextStageId].name;
                     playerQuest.backupTextId = quest.stages[nextStageId].backupTextId;
                     playerQuest.backupTimeSeconds = quest.stages[nextStageId].backupTimeSeconds;

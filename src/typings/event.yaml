@@ -1,0 +1,66 @@
+openapi: 3.0.0
+info:
+  title: Converted from event.yaml with typeconv
+  version: '1'
+  x-id: event.yaml
+  x-comment: >-
+    Generated from event.ts by core-types-json-schema
+    (https://github.com/grantila/core-types-json-schema) on behalf of typeconv
+    (https://github.com/grantila/typeconv)
+paths: {}
+components:
+  schemas:
+    Event:
+      properties:
+        sensorId:
+          title: Event.sensorId
+          type: string
+        playerId:
+          title: Event.playerId
+          type: string
+        value:
+          title: Event.value
+          anyOf:
+            - type: string
+            - type: number
+            - type: boolean
+        eventDateUtc:
+          title: Event.eventDateUtc
+          type: string
+      required:
+        - sensorId
+        - playerId
+        - value
+        - eventDateUtc
+      additionalProperties: false
+      title: Event
+      type: object
+    EventDAO:
+      properties:
+        eventId:
+          title: EventDAO.eventId
+          type: string
+        sensorId:
+          title: EventDAO.sensorId
+          type: string
+        playerId:
+          title: EventDAO.playerId
+          type: string
+        value:
+          title: EventDAO.value
+          anyOf:
+            - type: string
+            - type: number
+            - type: boolean
+        eventDateUtc:
+          $ref: '#/components/schemas/Timestamp'
+          title: EventDAO.eventDateUtc
+      required:
+        - eventId
+        - sensorId
+        - playerId
+        - value
+        - eventDateUtc
+      additionalProperties: false
+      title: EventDAO
+      type: object

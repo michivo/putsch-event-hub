@@ -1,0 +1,22 @@
+openapi: 3.0.0
+info:
+  title: Converted from greeting.yaml with typeconv
+  version: '1'
+  x-id: greeting.yaml
+  x-comment: >-
+    Generated from greeting.ts by core-types-json-schema
+    (https://github.com/grantila/core-types-json-schema) on behalf of typeconv
+    (https://github.com/grantila/typeconv)
+paths: {}
+components:
+  schemas:
+    Greeting:
+      properties:
+        message:
+          title: Greeting.message
+          type: string
+      required:
+        - message
+      additionalProperties: false
+      title: Greeting
+      type: object

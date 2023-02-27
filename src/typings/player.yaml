@@ -1,0 +1,48 @@
+openapi: 3.0.0
+info:
+  title: Converted from player.yaml with typeconv
+  version: '1'
+  x-id: player.yaml
+  x-comment: >-
+    Generated from player.ts by core-types-json-schema
+    (https://github.com/grantila/core-types-json-schema) on behalf of typeconv
+    (https://github.com/grantila/typeconv)
+paths: {}
+components:
+  schemas:
+    Player:
+      properties:
+        id:
+          title: Player.id
+          type: string
+        homeOffice:
+          title: Player.homeOffice
+          type: string
+        aisle:
+          title: Player.aisle
+          type: string
+        phase:
+          title: Player.phase
+          type: string
+        questsComplete:
+          items:
+            title: Player.questsComplete.[]
+            type: string
+          title: Player.questsComplete
+          type: array
+        questsActive:
+          items:
+            title: Player.questsActive.[]
+            type: string
+          title: Player.questsActive
+          type: array
+      required:
+        - id
+        - homeOffice
+        - aisle
+        - phase
+        - questsComplete
+        - questsActive
+      additionalProperties: false
+      title: Player
+      type: object

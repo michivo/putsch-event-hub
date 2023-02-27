@@ -195,4 +195,37 @@ router.getAsync('/stage', async (req: express.Request, res: express.Response) =>
     }
 });
 
+/**
+ * @openapi
+ * /api/v1/events/bauxi:
+ *   get:
+ *     tags:
+ *       - Events
+ *     produces:
+ *       - application/json
+ *     parameters:
+ *       - in: query
+ *         name: playerId
+ *         type: string
+ *       - in: query
+ *         name: playlistName
+ *         type: string
+ *     description: Creates a dummy event for bauxi
+ *     summary: Creates a dummy event for bauxi
+ *     responses:
+ *       200:
+ *         description: Should be 'OK' or so
+ */
+router.getAsync('/bauxi', async (req: express.Request, res: express.Response) => {
+    const { playerId, playlistName } = req.query;
+    console.log(`Getting dummy event for ${playerId} / ${playlistName}`);
+    if (playerId && playlistName) {
+        await eventService.dummyUpdateData(playerId?.toString(), playlistName?.toString());
+        res.send('OK');
+    }
+    else {
+        res.status(400).send('playerId and/or playlistName missing.');
+    }
+});
+
 export default router;

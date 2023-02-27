@@ -60,6 +60,7 @@ class EventService {
             stageIndex: 0,
             questId: questId,
             playlistName: '',
+            currentLocation: '',
         };
         if (!querySnapshot.empty) {
             console.log(`Updating quest for player with id ${playerId}`);
@@ -70,14 +71,14 @@ class EventService {
         }
     };
 
-    public getCurrentStage = async(playerId: string): Promise<PlayerQuestStage | undefined> => {
+    public getCurrentStage = async (playerId: string): Promise<PlayerQuestStage | undefined> => {
         const playerQuest = await this.dataContext.playerQuests.doc(playerId).get();
-        if(!playerQuest.exists) {
+        if (!playerQuest.exists) {
             return undefined;
         }
 
         const questData = playerQuest.data();
-        if(!questData) {
+        if (!questData) {
             return undefined;
         }
 
@@ -91,6 +92,34 @@ class EventService {
             name: questData.name,
             playlistName: questData.playlistName,
         };
+    };
+
+    public dummyUpdateData = async (playerId: string, playlistName: string): Promise<void> => {
+        const query = await this.dataContext.playerQuests
+            .where('playerId', '==', playerId)
+            .limit(1);
+
+        const results = await query.get();
+        const playerQuest: PlayerQuestDAO = {
+            backupTextId: 'dummy',
+            backupTimeSeconds: 1234,
+            name: 'bauxi dummy stage',
+            text: '',
+            triggerIds: [],
+            triggerType: 'DUMMY',
+            playerId: playerId,
+            stageIndex: 0,
+            questId: 'DUMMY',
+            playlistName: playlistName,
+            currentLocation: 'Toilet',
+        };
+        if (!results.empty) {
+            console.log(`Updating dummy quest for player with id ${playerId}`);
+            await this.dataContext.playerQuests.doc(playerId).set(playerQuest);
+        } else {
+            console.log(`Creating dummy quest for player with id ${playerId}`);
+            await this.dataContext.playerQuests.doc(playerId).create(playerQuest);
+        }
     };
 
     private updateGameData = async (event: Event): Promise<void> => {
@@ -110,12 +139,14 @@ class EventService {
         if (!results.empty) {
             const quests = await this.gameData.getQuests(true);
             const playerQuest = results.docs[0].data();
-            const quest = quests.find(q => q.id === playerQuest.questId);
-            if(quest) {
+            const quest = quests.find((q) => q.id === playerQuest.questId);
+            if (quest) {
                 const nextStageIndex = playerQuest.stageIndex + 1;
                 playerQuest.text = quest.stages[playerQuest.stageIndex].text;
-                if(nextStageIndex >= quest.stages.length) {
-                    console.log(`Player ${playerQuest.playerId} has reached the final stage of quest ${playerQuest.questId}`);
+                if (nextStageIndex >= quest.stages.length) {
+                    console.log(
+                        `Player ${playerQuest.playerId} has reached the final stage of quest ${playerQuest.questId}`
+                    );
                     playerQuest.stageIndex = -1;
                     playerQuest.triggerIds = [];
                     playerQuest.triggerType = '';
@@ -124,9 +155,13 @@ class EventService {
                     playerQuest.backupTimeSeconds = -1;
                     playerQuest.playlistName = '';
                     playerQuest.playlistName = quest.stages[nextStageIndex - 1].playlistName;
-                }
-                else {
-                    console.log(`Player ${playerQuest.playerId} has reached stage ${nextStageIndex + 1} of quest ${playerQuest.questId}`);
+                    playerQuest.currentLocation = event.sensorId;
+                } else {
+                    console.log(
+                        `Player ${playerQuest.playerId} has reached stage ${
+                            nextStageIndex + 1
+                        } of quest ${playerQuest.questId}`
+                    );
                     playerQuest.stageIndex = nextStageIndex;
                     playerQuest.triggerIds = quest.stages[nextStageIndex].triggerIds;
                     playerQuest.triggerType = quest.stages[nextStageIndex].triggerType;
@@ -134,17 +169,37 @@ class EventService {
                     playerQuest.backupTextId = quest.stages[nextStageIndex].backupTextId;
                     playerQuest.backupTimeSeconds = quest.stages[nextStageIndex].backupTimeSeconds;
                     playerQuest.playlistName = quest.stages[nextStageIndex - 1].playlistName;
+                    playerQuest.currentLocation = event.sensorId;
                 }
                 await this.dataContext.playerQuests.doc(playerQuest.playerId).set(playerQuest);
-            }
-            else {
+            } else {
                 console.log(`Could not find quest with id ${playerQuest.questId}`);
+                if (event.playerId) {
+                    this.updatePlayerLocation(event.playerId, event.sensorId);
+                }
             }
-        }
-        else {
-            console.log(`Received trigger for player ${event.playerId} and trigger ${event.sensorId}, but couldn't find active game`);
+        } else {
+            console.log(
+                `Received trigger for player ${event.playerId} and trigger ${event.sensorId}, but couldn't find active game`
+            );
+            if (event.playerId) {
+                this.updatePlayerLocation(event.playerId, event.sensorId);
+            }
         }
     };
+
+    async updatePlayerLocation(playerId: string, sensorId: string): Promise<void> {
+        const playerQuery = await this.dataContext.playerQuests
+            .where('playerId', '==', playerId)
+            .limit(1);
+
+        const results = await playerQuery.get();
+        if (!results.empty) {
+            const playerQuest = results.docs[0].data();
+            playerQuest.currentLocation = sensorId;
+            await this.dataContext.playerQuests.doc(playerQuest.playerId).set(playerQuest);
+        }
+    }
 
     public get = async (): Promise<Event[]> => {
         const querySnapshot = await this.dataContext.events.get();

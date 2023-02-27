@@ -71,28 +71,28 @@ async function getQuests(): Promise<Quest[]> {
         const quest: Quest = {
             id: row[0].toString(),
             subNumber: readSubNumber(row[1]),
-            cooldownTimeMinutes: row[13],
-            description: row[4],
+            cooldownTimeMinutes: row[15],
+            description: row[6],
             name: row[4],
-            parallel: row[12] && row[12].toLowerCase().includes('y'),
+            parallel: row[14] && row[14].toLowerCase().includes('y'),
             phase: readIntArray(row[5]),
-            repeatable: row[11] && row[11].toLowerCase().includes('y'),
+            repeatable: row[13] && row[13].toLowerCase().includes('y'),
             stages: [],
             state: row[5],
         };
-        for(let colIdx = 14; colIdx <= row.length - 10; colIdx += 10) {
-            const stageFields = row.slice(colIdx, colIdx + 10);
-            if(stageFields.length < 9) {
+        for(let colIdx = 16; colIdx <= row.length - 12; colIdx += 12) {
+            const stageFields = row.slice(colIdx, colIdx + 12);
+            if(stageFields.length < 11) {
                 break;
             }
             const stage: QuestStage = {
                 triggerType: stageFields[0],
-                triggerIds: readStringArray(stageFields[1]),
-                name: stageFields[4],
-                text: stageFields[6],
-                backupTimeSeconds: parseInt(stageFields[8]),
-                backupTextId: stageFields[9],
-                playlistName: stageFields[3],
+                triggerIds: readStringArray(stageFields[3]),
+                name: stageFields[6],
+                text: stageFields[8],
+                backupTimeSeconds: parseInt(stageFields[10]),
+                backupTextId: stageFields[11],
+                playlistName: stageFields[5],
             };
             quest.stages.push(stage);
         }

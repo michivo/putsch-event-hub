@@ -1,7 +1,7 @@
 import { uuidv4 } from '@firebase/util';
 import DataContext from '../../infrastructure/data/dataContext';
 import { Event, EventDAO } from '../../typings/event';
-import { Timestamp } from '@google-cloud/firestore';
+import { Timestamp, QuerySnapshot } from '@google-cloud/firestore';
 import GameDataService from '../gameData/gameDataService';
 import { PlayerQuestDAO, PlayerQuestStage } from '../../typings/quest';
 
@@ -70,6 +70,25 @@ class EventService {
             console.log(`Creating quest for player with id ${playerId}`);
             await this.dataContext.playerQuests.doc(playerId).create(playerQuest);
         }
+    };
+
+    public resetPlayers = async (playerId: string | undefined) => {
+        let querySnapshot: QuerySnapshot<PlayerQuestDAO>;
+        if (playerId) {
+            querySnapshot = await this.dataContext.playerQuests
+                .where('playerId', '==', playerId)
+                .limit(1)
+                .get();
+        } else {
+            querySnapshot = await this.dataContext.playerQuests.get();
+        }
+
+        console.log(`Deleting ${querySnapshot.docs} player quests`);
+        for (const quest of querySnapshot.docs) {
+            quest.ref.delete();
+        }
+
+        console.log(`Deleted ${querySnapshot.docs} player quests.`)
     };
 
     public getCurrentStage = async (playerId: string): Promise<PlayerQuestStage | undefined> => {
@@ -195,7 +214,7 @@ class EventService {
     };
 
     async updatePlayerLocation(playerId: string, sensorId: string): Promise<void> {
-        if(!playerId || !sensorId) {
+        if (!playerId || !sensorId) {
             return;
         }
 

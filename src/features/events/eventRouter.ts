@@ -39,6 +39,11 @@ const eventService = new EventService(database, gameDataService);
  *         type: string
  *       questId:
  *         type: string
+ *
+ *   ResetPlayersRequest:
+ *     properties:
+ *       playerId:
+ *         type: string
  */
 
 /**
@@ -152,6 +157,32 @@ router.getAsync('/', async (_: express.Request, res: express.Response) => {
  */
 router.postAsync('/quests/startRequests', async (req: express.Request, res: express.Response) => {
     await eventService.startQuest(req.body.playerId, req.body.questId);
+    res.send('OK');
+});
+
+/**
+ * @openapi
+ * /api/v1/events/players/resetRequests:
+ *   post:
+ *     tags:
+ *       - Events
+ *     produces:
+ *       - application/json
+ *     requestBody:
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/definitions/ResetPlayersRequest'
+ *         required: true
+ *         description: Start Quest Request
+ *     description: Resets a player's request
+ *     summary: If a player id is passed, only this player will be reset - else, all will be reset.
+ *     responses:
+ *       200:
+ *         description: OK
+ */
+router.postAsync('/players/resetRequests', async (req: express.Request, res: express.Response) => {
+    await eventService.resetPlayers(req.body.playerId);
     res.send('OK');
 });
 

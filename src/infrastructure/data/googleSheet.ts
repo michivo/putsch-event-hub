@@ -87,14 +87,16 @@ async function getQuests(): Promise<Quest[]> {
             }
             const stage: QuestStage = {
                 triggerType: stageFields[0],
-                triggerIds: readStringArray(stageFields[3]),
+                triggerIds: readStringArray(stageFields[1]),
                 name: stageFields[6],
                 text: stageFields[8],
                 backupTimeSeconds: parseInt(stageFields[10]),
                 backupTextId: stageFields[11],
                 playlistName: stageFields[5],
             };
-            quest.stages.push(stage);
+            if(stage.triggerIds && stage.triggerIds.length > 0) {
+                quest.stages.push(stage);
+            }
         }
         result.push(quest);
     }

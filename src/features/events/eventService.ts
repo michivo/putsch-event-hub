@@ -61,6 +61,7 @@ class EventService {
             questId: questId,
             playlistName: '',
             currentLocation: '',
+            stageCount: quest.stages.length,
         };
         if (!querySnapshot.empty) {
             console.log(`Updating quest for player with id ${playerId}`);
@@ -112,6 +113,7 @@ class EventService {
             questId: 'DUMMY',
             playlistName: playlistName,
             currentLocation: 'Toilet',
+            stageCount: 99,
         };
         if (!results.empty) {
             console.log(`Updating dummy quest for player with id ${playerId}`);
@@ -147,6 +149,9 @@ class EventService {
                     console.log(
                         `Player ${playerQuest.playerId} has reached the final stage of quest ${playerQuest.questId}`
                     );
+                    if (playerQuest.triggerType === 'ORT') {
+                        playerQuest.currentLocation = event.sensorId;
+                    }
                     playerQuest.stageIndex = -1;
                     playerQuest.triggerIds = [];
                     playerQuest.triggerType = '';
@@ -155,13 +160,16 @@ class EventService {
                     playerQuest.backupTimeSeconds = -1;
                     playerQuest.playlistName = '';
                     playerQuest.playlistName = quest.stages[nextStageIndex - 1].playlistName;
-                    playerQuest.currentLocation = event.sensorId;
+                    playerQuest.stageCount = quest.stages.length;
                 } else {
                     console.log(
                         `Player ${playerQuest.playerId} has reached stage ${
                             nextStageIndex + 1
                         } of quest ${playerQuest.questId}`
                     );
+                    if (playerQuest.triggerType === 'ORT') {
+                        playerQuest.currentLocation = event.sensorId;
+                    }
                     playerQuest.stageIndex = nextStageIndex;
                     playerQuest.triggerIds = quest.stages[nextStageIndex].triggerIds;
                     playerQuest.triggerType = quest.stages[nextStageIndex].triggerType;
@@ -170,25 +178,27 @@ class EventService {
                     playerQuest.backupTimeSeconds = quest.stages[nextStageIndex].backupTimeSeconds;
                     playerQuest.playlistName = quest.stages[nextStageIndex - 1].playlistName;
                     playerQuest.currentLocation = event.sensorId;
+                    playerQuest.stageCount = quest.stages.length;
                 }
                 await this.dataContext.playerQuests.doc(playerQuest.playerId).set(playerQuest);
             } else {
                 console.log(`Could not find quest with id ${playerQuest.questId}`);
-                if (event.playerId) {
-                    this.updatePlayerLocation(event.playerId, event.sensorId);
-                }
+                this.updatePlayerLocation(event.playerId, event.sensorId);
             }
         } else {
             console.log(
                 `Received trigger for player ${event.playerId} and trigger ${event.sensorId}, but couldn't find active game`
             );
-            if (event.playerId) {
-                this.updatePlayerLocation(event.playerId, event.sensorId);
-            }
+
+            this.updatePlayerLocation(event.playerId, event.sensorId);
         }
     };
 
     async updatePlayerLocation(playerId: string, sensorId: string): Promise<void> {
+        if(!playerId || !sensorId) {
+            return;
+        }
+
         const playerQuery = await this.dataContext.playerQuests
             .where('playerId', '==', playerId)
             .limit(1);

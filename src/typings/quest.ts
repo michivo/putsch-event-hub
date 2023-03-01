@@ -33,6 +33,7 @@ export interface PlayerQuestDAO {
     questId: string,
     playlistName: string,
     currentLocation: string,
+    stageCount: number,
 }
 
 export interface PlayerQuestStage {

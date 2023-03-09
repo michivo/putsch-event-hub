@@ -3,7 +3,6 @@ import { decorateRouter } from '@awaitjs/express';
 import { param, validationResult } from 'express-validator';
 import { BadRequestError } from '../../infrastructure/errors';
 import HealthService from './healthService';
-import { getPlayers } from '../../infrastructure/data/googleSheet';
 
 const router = decorateRouter(express.Router());
 const healthService = new HealthService();
@@ -53,8 +52,6 @@ const healthService = new HealthService();
  */
 router.getAsync('/hello/:name', param('name').isString().notEmpty(),
     async (req: express.Request, res: express.Response) => {
-        const players = await getPlayers();
-        console.log(players);
         const errors = validationResult(req);
         if (!errors.isEmpty()) {
             throw new BadRequestError(JSON.stringify(errors));

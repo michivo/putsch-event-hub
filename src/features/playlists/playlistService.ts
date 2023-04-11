@@ -34,13 +34,7 @@ class PlaylistService {
                 return {
                     name: name,
                     audioFiles: ids,
-                }; // https://drive.google.com/uc?id=12HstEXZVOfKs5OXvTHP5Ndq-EbR-I3e0&export=download
-                // alt: <iframe
-//   frameborder="0"
-//   width="400"
-//   height="200"
-//   src="https://drive.google.com/file/d/1234xyz/preview">
-// </iframe>
+                };
             }
         } catch (ex) {
             console.log(ex);

@@ -112,6 +112,44 @@ router.postAsync('/', async (req: express.Request, res: express.Response) => {
 
 /**
  * @openapi
+ * /api/v1/events/batch:
+ *   post:
+ *     tags:
+ *       - Events
+ *     produces:
+ *       - application/json
+ *     requestBody:
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: array
+ *               items:
+ *                 $ref: '#/definitions/Event'
+ *         required: true
+ *         description: A list of sensor events
+ *     description: Returns inserted event
+ *     summary: Processes a list of sensor events.
+ *     responses:
+ *       200:
+ *         description: The events that were inserted/updated
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: array
+ *               items:
+ *                 $ref: '#/definitions/Event'
+ */
+router.postAsync('/batch', async (req: express.Request, res: express.Response) => {
+    const errors = validationResult(req);
+    if (!errors.isEmpty()) {
+        throw new BadRequestError(JSON.stringify(errors));
+    }
+
+    res.send(await eventService.upsertEventsBulk(req.body));
+});
+
+/**
+ * @openapi
  * /api/v1/events:
  *   get:
  *     tags:

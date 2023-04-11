@@ -6,7 +6,7 @@ import GameDataService from '../gameData/gameDataService';
 import { PlayerQuestDAO, PlayerQuestStage } from '../../typings/quest';
 
 class EventService {
-    constructor(private dataContext: DataContext, private gameData: GameDataService) {}
+    constructor(private dataContext: DataContext, private gameData: GameDataService) { }
 
     public upsertEvent = async (event: Event): Promise<EventDAO> => {
         const existingSensorData = await this.getBySensorId(event.sensorId);
@@ -25,6 +25,31 @@ class EventService {
         await this.updateGameData(event);
 
         return dao;
+    };
+
+    public upsertEventsBulk = async (events: Event[]): Promise<EventDAO[]> => {
+        const existingSensorDataEntries = await this.getBySensorIds(events.map(e => e.sensorId));
+
+        const batch = this.dataContext.events.firestore.batch();
+        const daos: EventDAO[] = [];
+        for (const event of events) {
+            let dao: EventDAO;
+            this.setDateIfEmpty(event);
+            const existingSensorData = existingSensorDataEntries?.find(e => e.sensorId === event.sensorId);
+            if (existingSensorData) {
+                const sensorData = existingSensorData as EventDAO;
+                dao = this.mapToDao(event, sensorData.eventId);
+                await batch.set(this.dataContext.events.doc(sensorData.eventId), dao);
+            } else {
+                dao = this.mapToDao(event, uuidv4());
+                await batch.create(this.dataContext.events.doc(dao.eventId), dao);
+            }
+
+            await this.updateGameData(event, batch);
+            daos.push(dao);
+        }
+        await batch.commit();
+        return daos;
     };
 
     public startQuest = async (playerId: string, questId: string): Promise<void> => {
@@ -143,7 +168,7 @@ class EventService {
         }
     };
 
-    private updateGameData = async (event: Event): Promise<void> => {
+    private updateGameData = async (event: Event, batch: FirebaseFirestore.WriteBatch | undefined = undefined): Promise<void> => {
         let query: FirebaseFirestore.Query<PlayerQuestDAO>;
         if (event.playerId) {
             query = await this.dataContext.playerQuests
@@ -182,8 +207,7 @@ class EventService {
                     playerQuest.stageCount = quest.stages.length;
                 } else {
                     console.log(
-                        `Player ${playerQuest.playerId} has reached stage ${
-                            nextStageIndex + 1
+                        `Player ${playerQuest.playerId} has reached stage ${nextStageIndex + 1
                         } of quest ${playerQuest.questId}`
                     );
                     if (playerQuest.triggerType === 'ORT') {
@@ -199,7 +223,13 @@ class EventService {
                     playerQuest.currentLocation = event.sensorId;
                     playerQuest.stageCount = quest.stages.length;
                 }
-                await this.dataContext.playerQuests.doc(playerQuest.playerId).set(playerQuest);
+
+                if (batch) {
+                    batch.set(this.dataContext.playerQuests.doc(playerQuest.playerId), playerQuest);
+                }
+                else {
+                    await this.dataContext.playerQuests.doc(playerQuest.playerId).set(playerQuest);
+                }
             } else {
                 console.log(`Could not find quest with id ${playerQuest.questId}`);
                 this.updatePlayerLocation(event.playerId, event.sensorId);
@@ -254,6 +284,18 @@ class EventService {
 
         if (!querySnapshot.empty) {
             return querySnapshot.docs[0].data() as EventDAO;
+        }
+    }
+
+
+    private async getBySensorIds(sensorIds: string[]): Promise<EventDAO[] | undefined> {
+        const querySnapshot = await this.dataContext.events
+            .where('sensorId', 'in', sensorIds)
+            .get();
+
+        if (!querySnapshot.empty) {
+            const events = querySnapshot.docs.map((doc) => doc.data() as EventDAO);
+            return events;
         }
     }
 

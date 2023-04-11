@@ -11,7 +11,8 @@
     "tsc": "tsc",
     "build": "npm-run-all clean lint tsc copyfiles",
     "copyfiles": "copyfiles src/features/**/*.json dist/ && copyfiles src/keys/*.json dist/",
-    "maketypes": "cd src/typings && typeconv -f ts -t oapi *.ts"
+    "maketypes": "cd src/typings && typeconv -f ts -t oapi *.ts",
+    "deploy": "npm-run-all clean lint tsc copyfiles && gcloud app deploy"
   },
   "repository": {
     "type": "git",

@@ -5,6 +5,7 @@
     },
     "collectionNames": {
         "events": "events",
-        "playerQuests": "playerQuests"
+        "playerQuests": "playerQuests",
+        "players": "players"
     }
 }

@@ -1,9 +1,9 @@
 import { uuidv4 } from '@firebase/util';
 import DataContext from '../../infrastructure/data/dataContext';
 import { Event, EventDAO } from '../../typings/event';
-import { Timestamp, QuerySnapshot } from '@google-cloud/firestore';
+import { FieldValue, Timestamp, QuerySnapshot } from '@google-cloud/firestore';
 import GameDataService from '../gameData/gameDataService';
-import { PlayerQuestDAO, PlayerQuestStage } from '../../typings/quest';
+import { PlayerQuestDAO, PlayerQuestStage, Quest } from '../../typings/quest';
 
 class EventService {
     constructor(private dataContext: DataContext, private gameData: GameDataService) { }
@@ -95,6 +95,11 @@ class EventService {
             console.log(`Creating quest for player with id ${playerId}`);
             await this.dataContext.playerQuests.doc(playerId).create(playerQuest);
         }
+        this.dataContext.players.doc(playerQuest.playerId).set({
+            id: playerQuest.playerId,
+            questActive: questId,
+        },
+            { merge: true });
     };
 
     public resetPlayers = async (playerId: string | undefined) => {
@@ -110,7 +115,7 @@ class EventService {
 
         console.log(`Deleting ${querySnapshot.docs} player quests`);
         for (const quest of querySnapshot.docs) {
-            quest.ref.delete();
+            await quest.ref.delete();
         }
 
         console.log(`Deleted ${querySnapshot.docs} player quests.`)
@@ -184,55 +189,21 @@ class EventService {
         const results = await query.get();
         if (!results.empty) {
             const quests = await this.gameData.getQuests(true);
-            const playerQuest = results.docs[0].data();
-            const quest = quests.find((q) => q.id === playerQuest.questId);
-            if (quest) {
-                const nextStageIndex = playerQuest.stageIndex + 1;
-                playerQuest.text = quest.stages[playerQuest.stageIndex].text;
-                if (nextStageIndex >= quest.stages.length) {
-                    console.log(
-                        `Player ${playerQuest.playerId} has reached the final stage of quest ${playerQuest.questId}`
-                    );
-                    if (playerQuest.triggerType === 'ORT') {
-                        playerQuest.currentLocation = event.sensorId;
+            for (const questDocument of results.docs) {
+                const playerQuest = questDocument.data();
+                const quest = quests.find((q) => q.id === playerQuest.questId);
+                if (quest) {
+                    this.updatePlayerQuest(playerQuest, quest, event);
+                    if (batch) {
+                        batch.set(this.dataContext.playerQuests.doc(playerQuest.playerId), playerQuest);
                     }
-                    playerQuest.stageIndex = -1;
-                    playerQuest.triggerIds = [];
-                    playerQuest.triggerType = '';
-                    playerQuest.name = '---DONE---';
-                    playerQuest.backupTextId = '';
-                    playerQuest.backupTimeSeconds = -1;
-                    playerQuest.playlistName = '';
-                    playerQuest.playlistName = quest.stages[nextStageIndex - 1].playlistName;
-                    playerQuest.stageCount = quest.stages.length;
+                    else {
+                        await this.dataContext.playerQuests.doc(playerQuest.playerId).set(playerQuest);
+                    }
                 } else {
-                    console.log(
-                        `Player ${playerQuest.playerId} has reached stage ${nextStageIndex + 1
-                        } of quest ${playerQuest.questId}`
-                    );
-                    if (playerQuest.triggerType === 'ORT') {
-                        playerQuest.currentLocation = event.sensorId;
-                    }
-                    playerQuest.stageIndex = nextStageIndex;
-                    playerQuest.triggerIds = quest.stages[nextStageIndex].triggerIds;
-                    playerQuest.triggerType = quest.stages[nextStageIndex].triggerType;
-                    playerQuest.name = quest.stages[nextStageIndex].name;
-                    playerQuest.backupTextId = quest.stages[nextStageIndex].backupTextId;
-                    playerQuest.backupTimeSeconds = quest.stages[nextStageIndex].backupTimeSeconds;
-                    playerQuest.playlistName = quest.stages[nextStageIndex - 1].playlistName;
-                    playerQuest.currentLocation = event.sensorId;
-                    playerQuest.stageCount = quest.stages.length;
+                    console.log(`Could not find quest with id ${playerQuest.questId}`);
+                    this.updatePlayerLocation(event.playerId, event.sensorId);
                 }
-
-                if (batch) {
-                    batch.set(this.dataContext.playerQuests.doc(playerQuest.playerId), playerQuest);
-                }
-                else {
-                    await this.dataContext.playerQuests.doc(playerQuest.playerId).set(playerQuest);
-                }
-            } else {
-                console.log(`Could not find quest with id ${playerQuest.questId}`);
-                this.updatePlayerLocation(event.playerId, event.sensorId);
             }
         } else {
             console.log(
@@ -240,8 +211,94 @@ class EventService {
             );
 
             this.updatePlayerLocation(event.playerId, event.sensorId);
+
+            if (!event.playerId) {
+                this.tryStartQuest(event.sensorId);
+            }
         }
     };
+
+    private tryStartQuest = async (sensorId: string) => {
+        const quests = await this.gameData.getQuests();
+        const questsStartingAtLocation = quests.filter(q => q.stages.length > 0 &&
+            q.stages[0].triggerType === 'ORT' &&
+            q.stages[0].triggerIds.length > 0 &&
+            q.stages[0].triggerIds.includes(sensorId));
+        console.log(`Found ${questsStartingAtLocation.length} quests starting at location ${sensorId}`);
+
+        if(questsStartingAtLocation.length === 0) {
+            return;
+        }
+
+        const inactivePlayersQuery = await this.dataContext.players
+            .where('currentLocation', '==', sensorId);
+
+        const inactivePlayers = await inactivePlayersQuery.get();
+        for(const player of inactivePlayers.docs) {
+            const playerData = player.data();
+            if(playerData.questActive) {
+                continue;
+            }
+            const questNotStarted = questsStartingAtLocation.find(q => (playerData.questsComplete as string[]).includes(q.id) === false);
+            if(questNotStarted) {
+                console.log(`Starting new quest ${questNotStarted.id} for player ${playerData.id}`);
+                this.startQuest(playerData.id, questNotStarted.id);
+            }
+        }
+    }
+
+    private updatePlayerQuest = async (playerQuest: PlayerQuestDAO, quest: Quest, event: Event) => {
+        const nextStageIndex = playerQuest.stageIndex + 1;
+        playerQuest.text = quest.stages[playerQuest.stageIndex].text;
+        if (nextStageIndex >= quest.stages.length) {
+            console.log(
+                `Player ${playerQuest.playerId} has reached the final stage of quest ${playerQuest.questId}`
+            );
+            if (playerQuest.triggerType === 'ORT') {
+                playerQuest.currentLocation = event.sensorId;
+            }
+            playerQuest.stageIndex = -1;
+            playerQuest.triggerIds = [];
+            playerQuest.triggerType = '';
+            playerQuest.name = '---DONE---';
+            playerQuest.backupTextId = '';
+            playerQuest.backupTimeSeconds = -1;
+            playerQuest.playlistName = '';
+            playerQuest.playlistName = quest.stages[nextStageIndex - 1].playlistName;
+            playerQuest.stageCount = quest.stages.length;
+
+            this.dataContext.players.doc(playerQuest.playerId).set({
+                id: playerQuest.playerId,
+                questActive: '',
+                questsComplete: FieldValue.arrayUnion(playerQuest.questId),
+                currentLocation: event.sensorId,
+            },
+                { merge: true });
+        } else {
+            console.log(
+                `Player ${playerQuest.playerId} has reached stage ${nextStageIndex + 1
+                } of quest ${playerQuest.questId}`
+            );
+            if (playerQuest.triggerType === 'ORT') {
+                playerQuest.currentLocation = event.sensorId;
+            }
+            playerQuest.stageIndex = nextStageIndex;
+            playerQuest.triggerIds = quest.stages[nextStageIndex].triggerIds;
+            playerQuest.triggerType = quest.stages[nextStageIndex].triggerType;
+            playerQuest.name = quest.stages[nextStageIndex].name;
+            playerQuest.backupTextId = quest.stages[nextStageIndex].backupTextId;
+            playerQuest.backupTimeSeconds = quest.stages[nextStageIndex].backupTimeSeconds;
+            playerQuest.playlistName = quest.stages[nextStageIndex - 1].playlistName;
+            playerQuest.currentLocation = event.sensorId;
+            playerQuest.stageCount = quest.stages.length;
+
+            this.dataContext.players.doc(playerQuest.playerId).set({
+                id: playerQuest.playerId,
+                currentLocation: event.sensorId,
+            },
+                { merge: true });
+        }
+    }
 
     async updatePlayerLocation(playerId: string, sensorId: string): Promise<void> {
         if (!playerId || !sensorId) {
@@ -258,6 +315,12 @@ class EventService {
             playerQuest.currentLocation = sensorId;
             await this.dataContext.playerQuests.doc(playerQuest.playerId).set(playerQuest);
         }
+
+        this.dataContext.players.doc(playerId).set({
+            id: playerId,
+            currentLocation: sensorId,
+        },
+            { merge: true });
     }
 
     public get = async (): Promise<Event[]> => {

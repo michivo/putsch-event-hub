@@ -67,11 +67,6 @@ class EventService {
             throw new Error(`Player with id ${playerId} could not be found!`);
         }
 
-        const querySnapshot = await this.dataContext.playerQuests
-            .where('playerId', '==', playerId)
-            .limit(1)
-            .get();
-
         const firstStage = quest.stages[0];
 
         const playerQuest: PlayerQuestDAO = {
@@ -88,13 +83,15 @@ class EventService {
             currentLocation: '',
             stageCount: quest.stages.length,
         };
-        if (!querySnapshot.empty) {
-            console.log(`Updating quest for player with id ${playerId}`);
-            await this.dataContext.playerQuests.doc(playerId).set(playerQuest);
-        } else {
-            console.log(`Creating quest for player with id ${playerId}`);
-            await this.dataContext.playerQuests.doc(playerId).create(playerQuest);
+        console.log(`Creating/Updating quest for player with id ${playerId}`);
+        await this.dataContext.playerQuests.doc(playerId).set(playerQuest);
+
+        if (firstStage.radioId && firstStage.radioPlaylistName) {
+            console.log(`Setting playlist ${firstStage.radioPlaylistName} for radio ${firstStage.radioId}.`)
+            await this.dataContext.playerQuests.doc(firstStage.radioId).set(
+                { playlistName: firstStage.radioPlaylistName }, { merge: true });
         }
+
         this.dataContext.players.doc(playerQuest.playerId).set({
             id: playerQuest.playerId,
             questActive: questId,
@@ -226,7 +223,7 @@ class EventService {
             q.stages[0].triggerIds.includes(sensorId));
         console.log(`Found ${questsStartingAtLocation.length} quests starting at location ${sensorId}`);
 
-        if(questsStartingAtLocation.length === 0) {
+        if (questsStartingAtLocation.length === 0) {
             return;
         }
 
@@ -234,15 +231,15 @@ class EventService {
             .where('currentLocation', '==', sensorId);
 
         const inactivePlayers = await inactivePlayersQuery.get();
-        for(const player of inactivePlayers.docs) {
+        for (const player of inactivePlayers.docs) {
             const playerData = player.data();
-            if(playerData.questActive) {
+            if (playerData.questActive) {
                 continue;
             }
             const questNotStarted = questsStartingAtLocation.find(q =>
                 !playerData.questsComplete ||
                 (playerData.questsComplete as string[]).includes(q.id) === false);
-            if(questNotStarted) {
+            if (questNotStarted) {
                 console.log(`Starting new quest ${questNotStarted.id} for player ${playerData.id}`);
                 this.startQuest(playerData.id, questNotStarted.id);
             }
@@ -298,12 +295,12 @@ class EventService {
                 id: playerQuest.playerId,
                 currentLocation: event.sensorId,
             }, { merge: true });
-        }
 
-        if(quest.stages[nextStageIndex].radioId && quest.stages[nextStageIndex].radioPlaylistName) {
-            console.log(`Setting playlist ${quest.stages[nextStageIndex].radioPlaylistName} for radio ${quest.stages[nextStageIndex].radioId}.`)
-            await this.dataContext.playerQuests.doc(quest.stages[nextStageIndex].radioId).set(
+            if (quest.stages[nextStageIndex].radioId && quest.stages[nextStageIndex].radioPlaylistName) {
+                console.log(`Setting playlist ${quest.stages[nextStageIndex].radioPlaylistName} for radio ${quest.stages[nextStageIndex].radioId}.`)
+                await this.dataContext.playerQuests.doc(quest.stages[nextStageIndex].radioId).set(
                     { playlistName: quest.stages[nextStageIndex].radioPlaylistName }, { merge: true });
+            }
         }
     }
 

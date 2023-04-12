@@ -89,7 +89,7 @@ class EventService {
         if (firstStage.radioId && firstStage.radioPlaylistName) {
             console.log(`Setting playlist ${firstStage.radioPlaylistName} for radio ${firstStage.radioId}.`)
             await this.dataContext.playerQuests.doc(firstStage.radioId).set(
-                { playlistName: firstStage.radioPlaylistName }, { merge: true });
+                { playerId: firstStage.radioId, playlistName: firstStage.radioPlaylistName }, { merge: true });
         }
 
         this.dataContext.players.doc(playerQuest.playerId).set({
@@ -299,7 +299,7 @@ class EventService {
             if (quest.stages[nextStageIndex].radioId && quest.stages[nextStageIndex].radioPlaylistName) {
                 console.log(`Setting playlist ${quest.stages[nextStageIndex].radioPlaylistName} for radio ${quest.stages[nextStageIndex].radioId}.`)
                 await this.dataContext.playerQuests.doc(quest.stages[nextStageIndex].radioId).set(
-                    { playlistName: quest.stages[nextStageIndex].radioPlaylistName }, { merge: true });
+                    { playerId: quest.stages[nextStageIndex].radioId, playlistName: quest.stages[nextStageIndex].radioPlaylistName }, { merge: true });
             }
         }
     }

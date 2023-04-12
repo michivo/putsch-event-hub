@@ -65,7 +65,7 @@ async function getQuests(): Promise<Quest[]> {
     const result: Quest[] = [];
     rows = rows.slice(1);
     for (const row of rows) {
-        if(!row[0] || row[0].toString().trim() === '') {
+        if(!row[0] || row[0].toString().trim() === '' || (row[1] && row[1].toString().trim !== '')) {
             continue;
         }
         const quest: Quest = {
@@ -93,6 +93,9 @@ async function getQuests(): Promise<Quest[]> {
                 backupTimeSeconds: parseInt(stageFields[10]),
                 backupTextId: stageFields[11],
                 playlistName: stageFields[5],
+                radioId: stageFields[2],
+                radioPlaylistName: stageFields[3],
+                preconditions: stageFields[4],
             };
             if(stage.triggerIds && stage.triggerIds.length > 0) {
                 quest.stages.push(stage);

@@ -19,6 +19,9 @@ export interface QuestStage {
     backupTimeSeconds: number,
     backupTextId: string,
     playlistName: string,
+    radioId: string,
+    radioPlaylistName: string,
+    preconditions: string,
 }
 
 export interface PlayerQuestDAO {

@@ -239,7 +239,9 @@ class EventService {
             if(playerData.questActive) {
                 continue;
             }
-            const questNotStarted = questsStartingAtLocation.find(q => (playerData.questsComplete as string[]).includes(q.id) === false);
+            const questNotStarted = questsStartingAtLocation.find(q =>
+                !playerData.questsComplete ||
+                (playerData.questsComplete as string[]).includes(q.id) === false);
             if(questNotStarted) {
                 console.log(`Starting new quest ${questNotStarted.id} for player ${playerData.id}`);
                 this.startQuest(playerData.id, questNotStarted.id);

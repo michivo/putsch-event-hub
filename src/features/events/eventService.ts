@@ -301,6 +301,7 @@ class EventService {
         }
 
         if(quest.stages[nextStageIndex].radioId && quest.stages[nextStageIndex].radioPlaylistName) {
+            console.log(`Setting playlist ${quest.stages[nextStageIndex].radioPlaylistName} for radio ${quest.stages[nextStageIndex].radioId}.`)
             await this.dataContext.playerQuests.doc(quest.stages[nextStageIndex].radioId).set(
                     { playlistName: quest.stages[nextStageIndex].radioPlaylistName }, { merge: true });
         }

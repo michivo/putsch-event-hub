@@ -266,13 +266,29 @@ class EventService {
             playerQuest.playlistName = quest.stages[nextStageIndex - 1].playlistName;
             playerQuest.stageCount = quest.stages.length;
 
-            await this.dataContext.players.doc(playerQuest.playerId).set({
-                id: playerQuest.playerId,
-                questActive: '',
-                questsComplete: FieldValue.arrayUnion(playerQuest.questId),
-                currentLocation: event.sensorId,
-            },
-                { merge: true });
+            if (quest.stages[nextStageIndex - 1].sleepTime) {
+                setTimeout(async () => {
+                    await this.dataContext.players.doc(playerQuest.playerId).set({
+                        id: playerQuest.playerId,
+                        questActive: '',
+                        questsComplete: FieldValue.arrayUnion(playerQuest.questId),
+                        currentLocation: event.sensorId,
+                    },
+                        { merge: true });
+                    await this.checkTriggerNextQuest(event.playerId);
+                }, quest.stages[nextStageIndex - 1].sleepTime);
+            }
+            else {
+                await this.dataContext.players.doc(playerQuest.playerId).set({
+                    id: playerQuest.playerId,
+                    questActive: '',
+                    questsComplete: FieldValue.arrayUnion(playerQuest.questId),
+                    currentLocation: event.sensorId,
+                },
+                    { merge: true });
+
+                this.checkTriggerNextQuest(event.playerId);
+            }
         } else {
             console.log(
                 `Player ${playerQuest.playerId} has reached stage ${nextStageIndex + 1
@@ -302,6 +318,11 @@ class EventService {
                     { playerId: quest.stages[nextStageIndex].radioId, playlistName: quest.stages[nextStageIndex].radioPlaylistName }, { merge: true });
             }
         }
+    }
+
+
+    private checkTriggerNextQuest = async (playerId: string) => {
+        console.log(`Checking if next quest can be triggered for player ${playerId}`);
     }
 
     async updatePlayerLocation(playerId: string, sensorId: string): Promise<void> {

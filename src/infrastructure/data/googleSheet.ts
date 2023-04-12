@@ -80,9 +80,9 @@ async function getQuests(): Promise<Quest[]> {
             stages: [],
             state: row[5],
         };
-        for(let colIdx = 16; colIdx <= row.length - 12; colIdx += 12) {
-            const stageFields = row.slice(colIdx, colIdx + 12);
-            if(stageFields.length < 11) {
+        for(let colIdx = 16; colIdx <= row.length - 13; colIdx += 13) {
+            const stageFields = row.slice(colIdx, colIdx + 13);
+            if(stageFields.length < 12) {
                 break;
             }
             const stage: QuestStage = {
@@ -96,6 +96,7 @@ async function getQuests(): Promise<Quest[]> {
                 radioId: stageFields[2],
                 radioPlaylistName: stageFields[3],
                 preconditions: stageFields[4],
+                sleepTime: parseInt(stageFields[12]),
             };
             if(stage.triggerIds && stage.triggerIds.length > 0) {
                 quest.stages.push(stage);

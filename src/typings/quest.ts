@@ -22,6 +22,7 @@ export interface QuestStage {
     radioId: string,
     radioPlaylistName: string,
     preconditions: string,
+    sleepTime: number,
 }
 
 export interface PlayerQuestDAO {

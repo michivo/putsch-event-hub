@@ -269,7 +269,7 @@ class EventService {
             playerQuest.playlistName = quest.stages[nextStageIndex - 1].playlistName;
             playerQuest.stageCount = quest.stages.length;
 
-            this.dataContext.players.doc(playerQuest.playerId).set({
+            await this.dataContext.players.doc(playerQuest.playerId).set({
                 id: playerQuest.playerId,
                 questActive: '',
                 questsComplete: FieldValue.arrayUnion(playerQuest.questId),
@@ -294,11 +294,15 @@ class EventService {
             playerQuest.currentLocation = event.sensorId;
             playerQuest.stageCount = quest.stages.length;
 
-            this.dataContext.players.doc(playerQuest.playerId).set({
+            await this.dataContext.players.doc(playerQuest.playerId).set({
                 id: playerQuest.playerId,
                 currentLocation: event.sensorId,
-            },
-                { merge: true });
+            }, { merge: true });
+        }
+
+        if(quest.stages[nextStageIndex].radioId && quest.stages[nextStageIndex].radioPlaylistName) {
+            await this.dataContext.playerQuests.doc(quest.stages[nextStageIndex].radioId).set(
+                    { playlistName: quest.stages[nextStageIndex].radioPlaylistName }, { merge: true });
         }
     }
 

@@ -1,10 +1,9 @@
 import { uuidv4 } from '@firebase/util';
 import DataContext from '../../infrastructure/data/dataContext';
 import { Event, EventDAO } from '../../typings/event';
-import { FieldValue, Timestamp, QuerySnapshot } from '@google-cloud/firestore';
+import { FieldValue, Timestamp } from '@google-cloud/firestore';
 import GameDataService from '../gameData/gameDataService';
 import { PlayerQuestDAO, PlayerQuestStage, Quest } from '../../typings/quest';
-import { PlayerDAO } from '../../typings/player';
 
 class EventService {
     constructor(private dataContext: DataContext, private gameData: GameDataService) { }

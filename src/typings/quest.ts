@@ -22,7 +22,7 @@ export interface QuestStage {
     radioId: string,
     radioPlaylistName: string,
     preconditions: string,
-    sleepTime: number,
+    sleepTime: number | undefined | null,
 }
 
 export interface PlayerQuestDAO {
@@ -38,6 +38,7 @@ export interface PlayerQuestDAO {
     playlistName: string,
     currentLocation: string,
     stageCount: number,
+    delaySeconds: number,
 }
 
 export interface PlayerQuestStage {

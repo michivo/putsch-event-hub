@@ -79,6 +79,8 @@ async function getQuests(): Promise<Quest[]> {
             repeatable: row[13] && row[13].toLowerCase().includes('y'),
             stages: [],
             state: row[5],
+            preconditionsPlayer: row[7],
+            preconditionsQuest: row[8],
         };
         for(let colIdx = 16; colIdx <= row.length - 13; colIdx += 13) {
             const stageFields = row.slice(colIdx, colIdx + 13);

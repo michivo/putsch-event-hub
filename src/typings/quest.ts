@@ -8,7 +8,9 @@ export interface Quest {
     repeatable: boolean,
     parallel: boolean,
     cooldownTimeMinutes: number,
-    stages: QuestStage[]
+    stages: QuestStage[],
+    preconditionsPlayer: string,
+    preconditionsQuest: string,
 }
 
 export interface QuestStage {

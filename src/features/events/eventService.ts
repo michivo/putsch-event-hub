@@ -4,6 +4,7 @@ import { Event, EventDAO } from '../../typings/event';
 import { FieldValue, Timestamp } from '@google-cloud/firestore';
 import GameDataService from '../gameData/gameDataService';
 import { PlayerQuestDAO, PlayerQuestStage, Quest } from '../../typings/quest';
+import { PlayerDAO } from '../../typings/player';
 
 class EventService {
     constructor(private dataContext: DataContext, private gameData: GameDataService) { }
@@ -242,9 +243,7 @@ class EventService {
             if (playerData.questActive) {
                 continue;
             }
-            const questNotStarted = questsStartingAtLocation.find(q =>
-                !playerData.questsComplete ||
-                (playerData.questsComplete as string[]).includes(q.id) === false);
+            const questNotStarted = this.findQuestForPlayer(questsStartingAtLocation, player.data());
             if (questNotStarted) {
                 console.log(`Starting new quest ${questNotStarted.id} for player ${playerData.id}`);
                 await this.startQuest(playerData.id, questNotStarted.id);
@@ -259,6 +258,79 @@ class EventService {
             }
         }
     }
+
+    private logQuestCandidates(prefix: string, candidates: Quest[]) {
+        console.log(`${prefix} ${candidates.map(c => c.id).join(', ')}`);
+    }
+
+    private findQuestForPlayer(candidates: Quest[], player: PlayerDAO) : Quest | undefined {
+        this.logQuestCandidates(`Initial candidates for player ${player.id}`, candidates);
+        const filteredCandidates = candidates.filter(q =>
+            !player.questsComplete ||
+            (player.questsComplete as string[]).includes(q.id) === false);
+        this.logQuestCandidates(`Unplayed by player ${player.id}`, filteredCandidates);
+        const candidatesAfterPlayerPreconditions: Quest[] = [];
+        for(const candidate of filteredCandidates) {
+            const playerIds = this.getPlayerIds(candidate.preconditionsPlayer);
+            if(playerIds.length === 0 || playerIds.includes(player.id)) {
+                candidatesAfterPlayerPreconditions.push(candidate);
+            }
+        }
+        this.logQuestCandidates(`Playable by player ${player.id}`, candidatesAfterPlayerPreconditions);
+
+        const candidatesAfterQuestPreconditions: Quest[] = [];
+        for(const candidate of candidatesAfterPlayerPreconditions) {
+            if(!candidate.preconditionsQuest) {
+                candidatesAfterQuestPreconditions.push(candidate);
+                continue;
+            }
+            if(candidate.preconditionsQuest.endsWith('*')) {
+                const prefix = candidate.preconditionsQuest.substring(0, candidate.preconditionsQuest.length - 1);
+                if(player.questsComplete && (player.questsComplete as string[]).find(q => q.startsWith(prefix))) {
+                    candidatesAfterQuestPreconditions.push(candidate);
+                }
+                continue;
+            }
+            const questList = candidate.preconditionsQuest.split(',').map(q => q.trim());
+            for(const questId in questList) {
+                if(player.questsComplete && (player.questsComplete as string[]).includes(questId)) {
+                    candidatesAfterQuestPreconditions.push(candidate);
+                    break;
+                }
+            }
+        }
+
+        if(candidatesAfterPlayerPreconditions.length === 0) {
+            return undefined;
+        }
+
+        return candidatesAfterPlayerPreconditions[0];
+    }
+
+    private getPlayerIds(preconditions: string): string[] {
+        if(!preconditions) {
+            return [];
+        }
+        const trimmedConditions = preconditions.trim();
+        if(/^P\d+$/.test(trimmedConditions)) {
+            return [trimmedConditions];
+        }
+        if(/^P\d+-P\d+$/.test(trimmedConditions)) {
+            const ids = trimmedConditions.split('-');
+            const startId = parseInt(ids[0].substring(1));
+            const endId = parseInt(ids[1].substring(2));
+            const result: string[] = [];
+            for(let id = startId; id <= endId; id++) {
+                result.push(`P${id}`);
+            }
+            return result;
+        }
+        if(/^(P\d+,\s*)+P\d+$/.test(trimmedConditions)) {
+            return trimmedConditions.split(',');
+        }
+        return [];
+    }
+
 
     private updatePlayerQuest = async (playerQuest: PlayerQuestDAO, quest: Quest, event: Event) => {
         const nextStageIndex = playerQuest.stageIndex + 1;

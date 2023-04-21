@@ -41,6 +41,7 @@ export interface PlayerQuestDAO {
     currentLocation: string,
     stageCount: number,
     delaySeconds: number,
+    homeOffice: string,
 }
 
 export interface PlayerQuestStage {

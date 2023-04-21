@@ -84,6 +84,7 @@ class EventService {
             currentLocation: '',
             stageCount: quest.stages.length,
             delaySeconds: 0,
+            homeOffice: player.homeOffice,
         };
         console.log(`Creating/Updating quest for player with id ${playerId}`);
         await this.dataContext.playerQuests.doc(playerId).set(playerQuest);
@@ -161,6 +162,7 @@ class EventService {
             currentLocation: 'Toilet',
             stageCount: 99,
             delaySeconds: 0,
+            homeOffice: 'Toilet',
         };
         if (!results.empty) {
             console.log(`Updating dummy quest for player with id ${playerId}`);
@@ -386,6 +388,9 @@ class EventService {
             }
             playerQuest.stageIndex = nextStageIndex;
             playerQuest.triggerIds = quest.stages[nextStageIndex].triggerIds;
+            if(playerQuest.triggerIds.includes('HOME')) {
+                playerQuest.triggerIds.push(playerQuest.homeOffice);
+            }
             playerQuest.triggerType = quest.stages[nextStageIndex].triggerType;
             playerQuest.name = quest.stages[nextStageIndex].name;
             playerQuest.backupTextId = quest.stages[nextStageIndex].backupTextId;

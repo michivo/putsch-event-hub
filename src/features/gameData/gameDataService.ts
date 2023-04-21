@@ -16,7 +16,7 @@ class GameDataService {
             return players;
         }
         players = await getPlayers();
-        this.cache.set('players', players, 60);
+        this.cache.set('players', players, 120);
         return players;
     }
 

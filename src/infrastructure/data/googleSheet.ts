@@ -75,7 +75,7 @@ async function getQuests(): Promise<Quest[]> {
             description: row[6],
             name: row[4],
             parallel: row[14] && row[14].toLowerCase().includes('y'),
-            phase: readIntArray(row[5]),
+            phases: readIntArray(row[9]),
             repeatable: row[13] && row[13].toLowerCase().includes('y'),
             stages: [],
             state: row[5],

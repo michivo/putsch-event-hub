@@ -4,7 +4,7 @@ export interface Quest {
     state: string,
     name: string,
     description: string,
-    phase: number[],
+    phases: number[],
     repeatable: boolean,
     parallel: boolean,
     cooldownTimeMinutes: number,

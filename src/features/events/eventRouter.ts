@@ -71,6 +71,67 @@ const eventService = new EventService(database, gameDataService);
 
 /**
  * @openapi
+ * definitions:
+ *   PlayableQuest:
+ *     properties:
+ *       id:
+ *         type: number
+ *       subNumber:
+ *         type: number
+ *       state:
+ *         type: string
+ *       name:
+ *         type: string
+ *       description:
+ *         type: string
+ *       phase:
+ *         items:
+ *           type: number
+ *         type: array
+ *       repeatable:
+ *         type: boolean
+ *       parallel:
+ *         type: boolean
+ *       cooldownTimeMinutes:
+ *         type: number
+ *       stages:
+ *         items:
+ *           $ref: '#/definitions/PlayableQuestStage'
+ *         type: array
+ *     required:
+ *       - id
+ *       - subNumber
+ *       - state
+ *       - name
+ *       - description
+ *       - phase
+ *       - repeatable
+ *       - parallel
+ *       - cooldownTimeMinutes
+ *       - stages
+ */
+
+/**
+ * @openapi
+ * definitions:
+ *   PlayableQuestStage:
+ *     properties:
+ *       triggerType:
+ *         type: string
+ *       triggerIds:
+ *         items:
+ *           type: string
+ *         type: array
+ *       text:
+ *         type: string
+ *       backupTimeSeconds:
+ *         type: number
+ *       backupTextId:
+ *         type: string
+ */
+
+/**
+ * @openapi
  * tags:
  *   name: Events
  *   description: For posting events
@@ -295,6 +356,38 @@ router.getAsync('/bauxi', async (req: express.Request, res: express.Response) =>
     else {
         res.status(400).send('playerId and/or playlistName missing.');
     }
+});
+
+/**
+ * @openapi
+ * /api/v1/events/playableQuests:
+ *   get:
+ *     tags:
+ *       - Events
+ *     produces:
+ *       - application/json
+ *     parameters:
+ *       - in: query
+ *         name: playerId
+ *         type: string
+ *       - in: query
+ *         name: phaseId
+ *         type: string
+ *     description: Returns all quests playable by the player with the given id
+ *     summary: Gets all quests playable by player with given id
+ *     responses:
+ *       200:
+ *         description: 'OK'
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: array
+ *               items:
+ *                 $ref: '#/definitions/Quest'
+ */
+router.getAsync('/playableQuests', async (req: express.Request, res: express.Response) => {
+    const { playerId, phaseId } = req.query;
+    res.send(await eventService.getPlayableQuests(playerId as string, phaseId as string));
 });
 
 export default router;

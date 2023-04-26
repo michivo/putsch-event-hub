@@ -173,16 +173,51 @@ class EventService {
         }
     };
 
+    public getPlayableQuests = async (playerId: string, phaseId: string): Promise<Quest[]> => {
+        const playerQuery = this.dataContext.players
+            .where('id', '==', playerId)
+            .limit(1);
+
+        const playerQueryResult = await playerQuery.get();
+        let playerDao: PlayerDAO;
+        if (playerQueryResult.empty) {
+            playerDao = {
+                id: playerId,
+                currentLocation: '',
+                questActive: '',
+                questsComplete: [],
+            };
+        }
+        else {
+            playerDao = playerQueryResult.docs[0].data();
+        }
+        if (playerDao.questActive) {
+            return [];
+        }
+
+        let allQuests = await this.gameData.getQuests();
+        if (phaseId) {
+            const phase = parseInt(phaseId, 10);
+            if (phase) {
+                allQuests = allQuests.filter(q => q.phases.includes(phase));
+            }
+        }
+
+        return await this.findQuestsForPlayer(allQuests, playerDao);
+    }
+
     private updateGameData = async (event: Event, batch: FirebaseFirestore.WriteBatch | undefined = undefined): Promise<void> => {
         let query: FirebaseFirestore.Query<PlayerQuestDAO>;
         if (event.playerId) {
             query = await this.dataContext.playerQuests
                 .where('playerId', '==', event.playerId)
                 .where('triggerIds', 'array-contains', event.sensorId)
+                .where('triggerType', 'in', ['ORT', 'SENSOR', 'BEPOS'])
                 .limit(1);
         } else {
             query = await this.dataContext.playerQuests
                 .where('triggerIds', 'array-contains', event.sensorId)
+                .where('triggerType', 'in', ['ORT', 'SENSOR', 'BEPOS'])
                 .limit(1);
         }
 
@@ -245,8 +280,9 @@ class EventService {
             if (playerData.questActive) {
                 continue;
             }
-            const questNotStarted = this.findQuestForPlayer(questsStartingAtLocation, player.data());
-            if (questNotStarted) {
+            const questsNotStarted = this.findQuestsForPlayer(questsStartingAtLocation, player.data());
+            if (questsNotStarted.length > 0) {
+                const questNotStarted = questsNotStarted[0];
                 console.log(`Starting new quest ${questNotStarted.id} for player ${playerData.id}`);
                 await this.startQuest(playerData.id, questNotStarted.id);
                 const sensorEvent: Event = {
@@ -265,69 +301,69 @@ class EventService {
         console.log(`${prefix} ${candidates.map(c => c.id).join(', ')}`);
     }
 
-    private findQuestForPlayer(candidates: Quest[], player: PlayerDAO) : Quest | undefined {
+    private findQuestsForPlayer(candidates: Quest[], player: PlayerDAO): Quest[] {
         this.logQuestCandidates(`Initial candidates for player ${player.id}`, candidates);
         const filteredCandidates = candidates.filter(q =>
             !player.questsComplete ||
             (player.questsComplete as string[]).includes(q.id) === false);
         this.logQuestCandidates(`Unplayed by player ${player.id}`, filteredCandidates);
         const candidatesAfterPlayerPreconditions: Quest[] = [];
-        for(const candidate of filteredCandidates) {
+        for (const candidate of filteredCandidates) {
             const playerIds = this.getPlayerIds(candidate.preconditionsPlayer);
-            if(playerIds.length === 0 || playerIds.includes(player.id)) {
+            if (playerIds.length === 0 || playerIds.includes(player.id)) {
                 candidatesAfterPlayerPreconditions.push(candidate);
             }
         }
         this.logQuestCandidates(`Playable by player ${player.id}`, candidatesAfterPlayerPreconditions);
 
         const candidatesAfterQuestPreconditions: Quest[] = [];
-        for(const candidate of candidatesAfterPlayerPreconditions) {
-            if(!candidate.preconditionsQuest) {
+        for (const candidate of candidatesAfterPlayerPreconditions) {
+            if (!candidate.preconditionsQuest) {
                 candidatesAfterQuestPreconditions.push(candidate);
                 continue;
             }
-            if(candidate.preconditionsQuest.endsWith('*')) {
+            if (candidate.preconditionsQuest.endsWith('*')) {
                 const prefix = candidate.preconditionsQuest.substring(0, candidate.preconditionsQuest.length - 1);
-                if(player.questsComplete && (player.questsComplete as string[]).find(q => q.startsWith(prefix))) {
+                if (player.questsComplete && (player.questsComplete as string[]).find(q => q.startsWith(prefix))) {
                     candidatesAfterQuestPreconditions.push(candidate);
                 }
                 continue;
             }
             const questList = candidate.preconditionsQuest.split(',').map(q => q.trim());
-            for(const questId in questList) {
-                if(player.questsComplete && (player.questsComplete as string[]).includes(questId)) {
+            for (const questId in questList) {
+                if (player.questsComplete && (player.questsComplete as string[]).includes(questId)) {
                     candidatesAfterQuestPreconditions.push(candidate);
                     break;
                 }
             }
         }
 
-        if(candidatesAfterPlayerPreconditions.length === 0) {
-            return undefined;
+        if (candidatesAfterPlayerPreconditions.length === 0) {
+            return [];
         }
 
-        return candidatesAfterPlayerPreconditions[0];
+        return candidatesAfterPlayerPreconditions;
     }
 
     private getPlayerIds(preconditions: string): string[] {
-        if(!preconditions) {
+        if (!preconditions) {
             return [];
         }
         const trimmedConditions = preconditions.trim();
-        if(/^P\d+$/.test(trimmedConditions)) {
+        if (/^P\d+$/.test(trimmedConditions)) {
             return [trimmedConditions];
         }
-        if(/^P\d+-P\d+$/.test(trimmedConditions)) {
+        if (/^P\d+-P\d+$/.test(trimmedConditions)) {
             const ids = trimmedConditions.split('-');
             const startId = parseInt(ids[0].substring(1));
             const endId = parseInt(ids[1].substring(2));
             const result: string[] = [];
-            for(let id = startId; id <= endId; id++) {
+            for (let id = startId; id <= endId; id++) {
                 result.push(`P${id}`);
             }
             return result;
         }
-        if(/^(P\d+,\s*)+P\d+$/.test(trimmedConditions)) {
+        if (/^(P\d+,\s*)+P\d+$/.test(trimmedConditions)) {
             return trimmedConditions.split(',');
         }
         return [];
@@ -388,7 +424,7 @@ class EventService {
             }
             playerQuest.stageIndex = nextStageIndex;
             playerQuest.triggerIds = quest.stages[nextStageIndex].triggerIds;
-            if(playerQuest.triggerIds.includes('HOME')) {
+            if (playerQuest.triggerIds.includes('HOME')) {
                 playerQuest.triggerIds.push(playerQuest.homeOffice);
             }
             playerQuest.triggerType = quest.stages[nextStageIndex].triggerType;

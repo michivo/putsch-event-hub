@@ -126,12 +126,8 @@ router.getAsync('/players', async (_: express.Request, res: express.Response) =>
  *       - GameData
  *     produces:
  *       - application/json
- *     parameters:
- *       - in: query
- *         name: getAll
- *         type: boolean
- *     description: Returns all players
- *     summary: Gets all players with id, current quest(s), ...
+ *     description: Returns all quests
+ *     summary: Gets all quests
  *     responses:
  *       200:
  *         description: 'OK'
@@ -142,10 +138,8 @@ router.getAsync('/players', async (_: express.Request, res: express.Response) =>
  *               items:
  *                 $ref: '#/definitions/Quest'
  */
-router.getAsync('/quests', async (req: express.Request, res: express.Response) => {
-    const { getAll } = req.query;
-    const getAllQuests = typeof getAll === 'string' && getAll === 'true';
-    res.send(await gameDataService.getQuests(getAllQuests));
+router.getAsync('/quests', async (_: express.Request, res: express.Response) => {
+    res.send(await gameDataService.getQuests());
 });
 
 export default router;

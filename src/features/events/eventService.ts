@@ -174,36 +174,43 @@ class EventService {
     };
 
     public getPlayableQuests = async (playerId: string, phaseId: string): Promise<Quest[]> => {
-        const playerQuery = this.dataContext.players
-            .where('id', '==', playerId)
-            .limit(1);
+        console.log(`Getting playable quests for ${playerId}, phase ${phaseId}`);
+        try {
+            const playerQuery = this.dataContext.players
+                .where('id', '==', playerId)
+                .limit(1);
 
-        const playerQueryResult = await playerQuery.get();
-        let playerDao: PlayerDAO;
-        if (playerQueryResult.empty) {
-            playerDao = {
-                id: playerId,
-                currentLocation: '',
-                questActive: '',
-                questsComplete: [],
-            };
-        }
-        else {
-            playerDao = playerQueryResult.docs[0].data();
-        }
-        if (playerDao.questActive) {
-            return [];
-        }
-
-        let allQuests = await this.gameData.getQuests();
-        if (phaseId) {
-            const phase = parseInt(phaseId, 10);
-            if (phase) {
-                allQuests = allQuests.filter(q => q.phases.includes(phase));
+            const playerQueryResult = await playerQuery.get();
+            let playerDao: PlayerDAO;
+            if (playerQueryResult.empty) {
+                playerDao = {
+                    id: playerId,
+                    currentLocation: '',
+                    questActive: '',
+                    questsComplete: [],
+                };
             }
-        }
+            else {
+                playerDao = playerQueryResult.docs[0].data();
+            }
+            if (playerDao.questActive) {
+                return [];
+            }
 
-        return await this.findQuestsForPlayer(allQuests, playerDao);
+            let allQuests = await this.gameData.getQuests();
+            if (phaseId) {
+                const phase = parseInt(phaseId, 10);
+                if (phase) {
+                    allQuests = allQuests.filter(q => q.phases.includes(phase));
+                }
+            }
+
+            return await this.findQuestsForPlayer(allQuests, playerDao);
+        }
+        catch(error) {
+            console.error(error);
+            throw error;
+        }
     }
 
     private updateGameData = async (event: Event, batch: FirebaseFirestore.WriteBatch | undefined = undefined): Promise<void> => {
@@ -322,27 +329,39 @@ class EventService {
                 candidatesAfterQuestPreconditions.push(candidate);
                 continue;
             }
-            if (candidate.preconditionsQuest.endsWith('*')) {
-                const prefix = candidate.preconditionsQuest.substring(0, candidate.preconditionsQuest.length - 1);
-                if (player.questsComplete && (player.questsComplete as string[]).find(q => q.startsWith(prefix))) {
-                    candidatesAfterQuestPreconditions.push(candidate);
+            const preconditionList = candidate.preconditionsQuest.split(',').map(q => q.trim());
+
+            for (const questId in preconditionList) {
+                if (questId.endsWith('*')) {
+                    const prefix = candidate.preconditionsQuest.substring(0, candidate.preconditionsQuest.length - 1);
+                    if (player.questsComplete && (player.questsComplete as string[]).find(q => q.startsWith(prefix))) {
+                        candidatesAfterQuestPreconditions.push(candidate);
+                    }
+                    continue;
                 }
-                continue;
-            }
-            const questList = candidate.preconditionsQuest.split(',').map(q => q.trim());
-            for (const questId in questList) {
+                if(questId.startsWith('!')) {
+                    const negatedQuestId = questId.substring(1);
+                    if(player.questsComplete && (player.questsComplete as string[]).includes(negatedQuestId)) {
+                        const questIndex = candidatesAfterQuestPreconditions.findIndex(q => q.id === negatedQuestId);
+                        if(questIndex > -1) {
+                            candidatesAfterQuestPreconditions.splice(questIndex)
+                        }
+                    }
+                }
+
                 if (player.questsComplete && (player.questsComplete as string[]).includes(questId)) {
                     candidatesAfterQuestPreconditions.push(candidate);
                     break;
                 }
             }
         }
+        this.logQuestCandidates(`Playable after quest preconditions for ${player.id}`, candidatesAfterQuestPreconditions);
 
-        if (candidatesAfterPlayerPreconditions.length === 0) {
+        if (candidatesAfterQuestPreconditions.length === 0) {
             return [];
         }
 
-        return candidatesAfterPlayerPreconditions;
+        return candidatesAfterQuestPreconditions;
     }
 
     private getPlayerIds(preconditions: string): string[] {

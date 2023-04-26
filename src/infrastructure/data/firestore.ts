@@ -15,12 +15,10 @@ const getServiceAccount = (): ServiceAccount => {
         __dirname,
         moveOut,
         moveOut,
-        moveOut,
         config.get('serviceAccount')
     );
 
     const serviceAccountContent = fs.readFileSync(serviceAccountPath, 'utf8');
-
     return JSON.parse(serviceAccountContent);
 };
 

@@ -219,12 +219,10 @@ class EventService {
             query = await this.dataContext.playerQuests
                 .where('playerId', '==', event.playerId)
                 .where('triggerIds', 'array-contains', event.sensorId)
-                .where('triggerType', 'in', ['ORT', 'SENSOR', 'BEPOS'])
                 .limit(1);
         } else {
             query = await this.dataContext.playerQuests
                 .where('triggerIds', 'array-contains', event.sensorId)
-                .where('triggerType', 'in', ['ORT', 'SENSOR', 'BEPOS'])
                 .limit(1);
         }
 
@@ -383,7 +381,7 @@ class EventService {
             return result;
         }
         if (/^(P\d+,\s*)+P\d+$/.test(trimmedConditions)) {
-            return trimmedConditions.split(',');
+            return trimmedConditions.split(',').map(c => c.trim());
         }
         return [];
     }

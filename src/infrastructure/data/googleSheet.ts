@@ -81,6 +81,7 @@ async function getQuests(): Promise<Quest[]> {
             state: row[5],
             preconditionsPlayer: row[7],
             preconditionsQuest: row[8],
+            npcs: row[10],
         };
         for(let colIdx = 16; colIdx <= row.length - 13; colIdx += 13) {
             const stageFields = row.slice(colIdx, colIdx + 13);

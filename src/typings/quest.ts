@@ -11,6 +11,7 @@ export interface Quest {
     stages: QuestStage[],
     preconditionsPlayer: string,
     preconditionsQuest: string,
+    npcs: string,
 }
 
 export interface QuestStage {

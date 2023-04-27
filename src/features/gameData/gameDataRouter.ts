@@ -55,6 +55,8 @@ const gameDataService = new GameDataService();
  *         items:
  *           $ref: '#/definitions/QuestStage'
  *         type: array
+ *       npcs:
+ *         type: string
  *     required:
  *       - id
  *       - subNumber
@@ -66,6 +68,7 @@ const gameDataService = new GameDataService();
  *       - parallel
  *       - cooldownTimeMinutes
  *       - stages
+ *       - npcs
  */
 
 /**

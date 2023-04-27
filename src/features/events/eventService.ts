@@ -433,7 +433,7 @@ class EventService {
                         id: playerQuest.playerId,
                         questActive: '',
                         questsComplete: FieldValue.arrayUnion(playerQuest.questId),
-                        currentLocation: event.sensorId,
+                        currentLocation: playerQuest.currentLocation,
                     },
                         { merge: true });
                     await this.checkTriggerNextQuest(event.playerId, playerQuest.questId);
@@ -444,7 +444,7 @@ class EventService {
                     id: playerQuest.playerId,
                     questActive: '',
                     questsComplete: FieldValue.arrayUnion(playerQuest.questId),
-                    currentLocation: event.sensorId,
+                    currentLocation: playerQuest.currentLocation,
                 }, { merge: true });
 
                 await this.checkTriggerNextQuest(event.playerId, playerQuest.questId);
@@ -467,14 +467,13 @@ class EventService {
             playerQuest.backupTextId = quest.stages[nextStageIndex].backupTextId;
             playerQuest.backupTimeSeconds = quest.stages[nextStageIndex].backupTimeSeconds;
             playerQuest.playlistName = quest.stages[nextStageIndex - 1].playlistName;
-            playerQuest.currentLocation = event.sensorId;
             playerQuest.stageCount = quest.stages.length;
             playerQuest.delaySeconds = quest.stages[nextStageIndex - 1].sleepTime ?? 0;
-            playerQuest.npcName = quest.stages[nextStageIndex - 1].npcName;
+            playerQuest.npcName = quest.stages[nextStageIndex].npcName;
 
             await this.dataContext.players.doc(playerQuest.playerId).set({
                 id: playerQuest.playerId,
-                currentLocation: event.sensorId,
+                currentLocation: playerQuest.currentLocation,
             }, { merge: true });
 
             if (quest.stages[nextStageIndex - 1].radioId && quest.stages[nextStageIndex - 1].radioPlaylistName) {

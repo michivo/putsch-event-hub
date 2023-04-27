@@ -186,13 +186,12 @@ class EventService {
     public getPlayableQuests = async (playerId: string, phaseId: string): Promise<Quest[]> => {
         console.log(`Getting playable quests for ${playerId}, phase ${phaseId}`);
         try {
-            const playerQuery = this.dataContext.players
-                .where('id', '==', playerId)
-                .limit(1);
+            const playerQuery = this.dataContext.players.doc(playerId);
 
             const playerQueryResult = await playerQuery.get();
             let playerDao: PlayerDAO;
-            if (playerQueryResult.empty) {
+            if (!playerQueryResult.exists) {
+                console.log(`Could not find active player record for player ${playerId}.`);
                 playerDao = {
                     id: playerId,
                     currentLocation: '',
@@ -201,7 +200,12 @@ class EventService {
                 };
             }
             else {
-                playerDao = playerQueryResult.docs[0].data();
+                playerDao = playerQueryResult.data() ?? {
+                    id: playerId,
+                    currentLocation: '',
+                    questActive: '',
+                    questsComplete: [],
+                };
             }
             if (playerDao.questActive) {
                 return [];
@@ -297,7 +301,7 @@ class EventService {
             if (playerData.questActive) {
                 continue;
             }
-            const questsNotStarted = this.findQuestsForPlayer(questsStartingAtLocation, player.data());
+            const questsNotStarted = this.findQuestsForPlayer(questsStartingAtLocation, playerData);
             if (questsNotStarted.length > 0) {
                 const questNotStarted = questsNotStarted[0];
                 console.log(`Starting new quest ${questNotStarted.id} for player ${playerData.id}`);
@@ -319,7 +323,7 @@ class EventService {
     }
 
     private findQuestsForPlayer(candidates: Quest[], player: PlayerDAO): Quest[] {
-        this.logQuestCandidates(`Initial candidates for player ${player.id}`, candidates);
+        this.logQuestCandidates(`Initial candidates for player ${JSON.stringify(player)}`, candidates);
         const filteredCandidates = candidates.filter(q =>
             !player.questsComplete ||
             (player.questsComplete as string[]).includes(q.id) === false);
@@ -340,10 +344,9 @@ class EventService {
                 continue;
             }
             const preconditionList = candidate.preconditionsQuest.split(',').map(q => q.trim());
-
-            for (const questId in preconditionList) {
+            for (const questId of preconditionList) {
                 if (questId.endsWith('*')) {
-                    const prefix = candidate.preconditionsQuest.substring(0, candidate.preconditionsQuest.length - 1);
+                    const prefix = questId.substring(0, questId.length - 1);
                     if (player.questsComplete && (player.questsComplete as string[]).find(q => q.startsWith(prefix))) {
                         candidatesAfterQuestPreconditions.push(candidate);
                     }
@@ -530,15 +533,16 @@ class EventService {
             return;
         }
 
-        const playerQuery = this.dataContext.players
-            .where('id', '==', playerId)
-            .limit(1);
+        const playerQuery = this.dataContext.players.doc(playerId);
 
         const playerQueryResult = await playerQuery.get();
-        if (playerQueryResult.empty) {
+        if (playerQueryResult.exists) {
             return;
         }
-        const playerDao = playerQueryResult.docs[0].data();
+        const playerDao = playerQueryResult.data();
+        if(!playerDao) {
+            return;
+        }
 
         const playableQuest = this.findQuestsForPlayer(questTriggeredQuest, playerDao);
         if (playableQuest.length === 0) {

@@ -493,8 +493,14 @@ class EventService {
     private startStageDelayed = async (playerId: string, questId: string, stageIndex: number, triggerId: string) => {
         console.log(`Checking if we can trigger the next stage for ${playerId}`);
         const currentQuestDataQuery = await this.dataContext.playerQuests.doc(playerId).get();
+        const quests = await this.gameData.getQuests();
+        const quest  = quests.find(q => q.id === questId);
         if (!currentQuestDataQuery.exists) {
             console.log(`Could not find quest for player ${playerId}`);
+            return;
+        }
+        if(!quest) {
+            console.log(`Quest with id ${questId} was not found. That should not happen.`);
             return;
         }
         const currentQuest = currentQuestDataQuery.data();
@@ -502,12 +508,15 @@ class EventService {
             console.log(`Quest has changed in the meantime for ${playerId}, aborting.`);
             return;
         }
-        await this.updateGameData({
+        const event = {
             playerId: playerId,
             sensorId: triggerId,
             value: '',
             eventDateUtc: new Date().toISOString(),
-        });
+        };
+
+        await this.updatePlayerQuest(currentQuest, quest, event);
+        await this.dataContext.playerQuests.doc(playerId).set(currentQuest);
     }
 
     private checkTriggerNextQuest = async (playerId: string, finishedQuestId: string) => {

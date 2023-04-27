@@ -30,7 +30,7 @@ class PlaylistService {
                         ids.push({ id: f.id, name: f.name ?? '-unknown-' });
                     }
                 });
-                console.log(ids);
+                console.log(`Returning ${ids.length} entries in playlist ${name}`);
                 return {
                     name: name,
                     audioFiles: ids,

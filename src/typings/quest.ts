@@ -25,6 +25,7 @@ export interface QuestStage {
     radioPlaylistName: string,
     preconditions: string,
     sleepTime: number | undefined | null,
+    npcName: string,
 }
 
 export interface PlayerQuestDAO {
@@ -42,6 +43,7 @@ export interface PlayerQuestDAO {
     stageCount: number,
     delaySeconds: number,
     homeOffice: string,
+    npcName: string,
 }
 
 export interface PlayerQuestStage {

@@ -99,6 +99,7 @@ async function getQuests(): Promise<Quest[]> {
                 radioPlaylistName: stageFields[3],
                 preconditions: stageFields[4],
                 sleepTime: parseInt(stageFields[12]),
+                npcName: stageFields[9],
             };
             if(stage.triggerIds && stage.triggerIds.length > 0) {
                 quest.stages.push(stage);

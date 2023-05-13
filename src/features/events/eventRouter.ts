@@ -30,6 +30,13 @@ const eventService = new EventService(database, gameDataService);
  *         - type: number
  *         - type: boolean
  *
+ *   FeedbackFriendEvent:
+ *     required:
+ *       - playerId
+ *     properties:
+ *       playerId:
+ *         type: string
+ *
  *   StartQuestRequest:
  *     required:
  *       - playerId
@@ -182,10 +189,10 @@ router.postAsync('/', async (req: express.Request, res: express.Response) => {
  *     requestBody:
  *         content:
  *           application/json:
- *             name: playerId
- *             type: string
- *             required: true
- *             description: The player ID visiting feedback friend
+ *             schema:
+ *               $ref: '#/definitions/Event'
+ *         required: true
+ *         description: The player ID visiting feedback friend
  *     description: Returns inserted event
  *     summary: Processes a sensor event at feedback friend.
  *     responses:

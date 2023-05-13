@@ -85,22 +85,22 @@ async function getQuests(): Promise<Quest[]> {
         };
         for(let colIdx = 16; colIdx <= row.length - 13; colIdx += 13) {
             const stageFields = row.slice(colIdx, colIdx + 13);
-            if(stageFields.length < 12) {
+            if(stageFields.length < 7) {
                 break;
             }
             const stage: QuestStage = {
                 triggerType: stageFields[0],
                 triggerIds: readStringArray(stageFields[1]),
                 name: stageFields[6],
-                text: stageFields[8],
-                backupTimeSeconds: parseInt(stageFields[10]),
-                backupTextId: stageFields[11],
+                text: stageFields.length > 8 ? stageFields[8] : '',
+                backupTimeSeconds: stageFields.length > 10 ?  parseInt(stageFields[10]) : 0,
+                backupTextId: stageFields.length > 11 ?  stageFields[11] : 11,
                 playlistName: stageFields[5],
                 radioId: stageFields[2],
                 radioPlaylistName: stageFields[3],
                 preconditions: stageFields[4],
-                sleepTime: parseInt(stageFields[12]),
-                npcName: stageFields[9],
+                sleepTime: stageFields.length > 12 ?  parseInt(stageFields[12]) : 12,
+                npcName: stageFields.length > 9 ? stageFields[9] : 9,
             };
             if(stage.triggerIds && stage.triggerIds.length > 0) {
                 quest.stages.push(stage);

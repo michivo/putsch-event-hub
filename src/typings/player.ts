@@ -12,6 +12,7 @@ export type Player = {
 export interface PlayerDAO {
     id: string,
     currentLocation: string,
+    feedbackCount: number,
     questsComplete: string[] | FieldValue,
     questActive: string,
 }

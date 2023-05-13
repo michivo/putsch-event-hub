@@ -173,6 +173,45 @@ router.postAsync('/', async (req: express.Request, res: express.Response) => {
 
 /**
  * @openapi
+ * /api/v1/events/feedback-friend:
+ *   post:
+ *     tags:
+ *       - Events
+ *     produces:
+ *       - application/json
+ *     requestBody:
+ *         content:
+ *           application/json:
+ *             name: playerId
+ *             type: string
+ *             required: true
+ *             description: The player ID visiting feedback friend
+ *     description: Returns inserted event
+ *     summary: Processes a sensor event at feedback friend.
+ *     responses:
+ *       200:
+ *         description: The event that was inserted/updated
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/definitions/Event'
+ */
+router.postAsync('/feedback-friend', async (req: express.Request, res: express.Response) => {
+    const errors = validationResult(req);
+    if (!errors.isEmpty()) {
+        throw new BadRequestError(JSON.stringify(errors));
+    }
+
+    res.send(await eventService.feedbackFriend({
+        playerId: req.body.playerId,
+        sensorId: 'Feedbackfreund',
+        value: '',
+        eventDateUtc: '',
+    }));
+});
+
+/**
+ * @openapi
  * /api/v1/events/batch:
  *   post:
  *     tags:

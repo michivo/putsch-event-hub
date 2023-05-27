@@ -273,7 +273,7 @@ class EventService {
 
         const results = await query.get();
         if (!results.empty) {
-            const quests = await this.gameData.getQuests(true);
+            const quests = await this.gameData.getQuests();
             for (const questDocument of results.docs) {
                 const playerQuest = questDocument.data();
                 const quest = quests.find((q) => q.id === playerQuest.questId);
@@ -556,7 +556,7 @@ class EventService {
     }
 
     private checkTriggerNextQuest = async (playerId: string, finishedQuestId: string) => {
-        console.log(`Checking if next quest can be triggered for player ${playerId}`);
+        console.log(`Checking if next quest can be triggered for player ${playerId} after finishing ${finishedQuestId}`);
         const allQuests = await this.gameData.getQuests();
         const questTriggeredQuest = allQuests.filter(q => q.stages && q.stages.length > 0 && q.stages[0].triggerType === 'QUEST' &&
             q.stages[0].triggerIds && q.stages[0].triggerIds.includes(finishedQuestId));

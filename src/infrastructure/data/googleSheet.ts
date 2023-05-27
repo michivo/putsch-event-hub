@@ -57,6 +57,7 @@ async function getPlayers(): Promise<Player[]> {
 }
 
 async function getQuests(): Promise<Quest[]> {
+    console.error('Getting quests...');
     let rows = await loadData('Quests');
     if (!rows || rows.length < 2) {
         console.log('No data found.');
@@ -83,7 +84,7 @@ async function getQuests(): Promise<Quest[]> {
             preconditionsQuest: row[8],
             npcs: row[10],
         };
-        for(let colIdx = 16; colIdx <= row.length - 13; colIdx += 13) {
+        for(let colIdx = 16; colIdx <= row.length - 7; colIdx += 13) {
             const stageFields = row.slice(colIdx, colIdx + 13);
             if(stageFields.length < 7) {
                 break;

@@ -646,14 +646,19 @@ class EventService {
 
 
     private async getBySensorIds(sensorIds: string[]): Promise<EventDAO[] | undefined> {
+        const distinctIds = sensorIds.filter(this.onlyUnique);
         const querySnapshot = await this.dataContext.events
-            .where('sensorId', 'in', sensorIds)
+            .where('sensorId', 'in', distinctIds)
             .get();
 
         if (!querySnapshot.empty) {
             const events = querySnapshot.docs.map((doc) => doc.data() as EventDAO);
             return events;
         }
+    }
+
+    private onlyUnique<T>(value: T, index: number, array: T[]): boolean {
+        return array.indexOf(value) === index;
     }
 
     private mapToDao = (event: Event, id = ''): EventDAO => {

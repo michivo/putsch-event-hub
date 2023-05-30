@@ -49,6 +49,7 @@ async function getPlayers(): Promise<Player[]> {
             phase: row[3],
             questsComplete: split(row[4]),
             questsActive: split(row[5]),
+            homeRadio: row[7],
         };
         result.push(player);
     }

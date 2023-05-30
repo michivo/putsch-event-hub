@@ -45,6 +45,7 @@ export interface PlayerQuestDAO {
     delaySeconds: number,
     homeOffice: string,
     npcName: string,
+    homeRadio: string,
 }
 
 export interface PlayerQuestStage {

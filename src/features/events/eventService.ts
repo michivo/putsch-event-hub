@@ -115,6 +115,7 @@ class EventService {
             delaySeconds: firstStage.sleepTime ?? 0,
             homeOffice: player.homeOffice,
             npcName: firstStage.npcName,
+            homeRadio: player.homeRadio,
         };
         console.log(`Creating/Updating quest for player with id ${playerId}`);
         await this.dataContext.playerQuests.doc(playerId).set(playerQuest);
@@ -202,6 +203,7 @@ class EventService {
             delaySeconds: 0,
             homeOffice: 'Toilet',
             npcName: 'NPC1',
+            homeRadio: 'R12',
         };
         if (!results.empty) {
             console.log(`Updating dummy quest for player with id ${playerId}`);
@@ -508,9 +510,16 @@ class EventService {
             }, { merge: true });
 
             if (quest.stages[nextStageIndex - 1].radioId && quest.stages[nextStageIndex - 1].radioPlaylistName) {
-                console.log(`Setting playlist ${quest.stages[nextStageIndex - 1].radioPlaylistName} for radio ${quest.stages[nextStageIndex - 1].radioId}.`)
-                await this.dataContext.playerQuests.doc(quest.stages[nextStageIndex - 1].radioId).set(
-                    { playerId: quest.stages[nextStageIndex - 1].radioId, playlistName: quest.stages[nextStageIndex - 1].radioPlaylistName }, { merge: true });
+                let radioId = quest.stages[nextStageIndex - 1].radioId;
+                if (radioId === 'HOME' && playerQuest.homeRadio) {
+                    radioId = playerQuest.homeRadio;
+                    console.log(`Using ${playerQuest.homeRadio} instead of 'HOME'`);
+                }
+                if (radioId !== 'HOME') {
+                    console.log(`Setting playlist ${quest.stages[nextStageIndex - 1].radioPlaylistName} for radio ${radioId}.`)
+                    await this.dataContext.playerQuests.doc(radioId).set(
+                        { playerId: radioId, playlistName: quest.stages[nextStageIndex - 1].radioPlaylistName }, { merge: true });
+                }
             }
 
             if (quest.stages[nextStageIndex - 1].sleepTime) {

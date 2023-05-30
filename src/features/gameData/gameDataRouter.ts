@@ -24,6 +24,8 @@ const gameDataService = new GameDataService();
  *         type: array
  *         items:
  *           type: string
+ *       homeRadio:
+ *         type: string
  */
 
 /**

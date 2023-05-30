@@ -7,6 +7,7 @@ export type Player = {
     phase: string,
     questsComplete: string[],
     questsActive: string[],
+    homeRadio: string,
 }
 
 export interface PlayerDAO {

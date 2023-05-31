@@ -31,7 +31,7 @@ async function loadData(range: string) : Promise<any[][] | null | undefined> {
 }
 
 async function getPlayers(): Promise<Player[]> {
-    let rows = await loadData('Player!A:F');
+    let rows = await loadData('Player!A:H');
 
     if (!rows || rows.length < 2) {
         console.log('No data found.');

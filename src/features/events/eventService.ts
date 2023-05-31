@@ -357,6 +357,9 @@ class EventService {
 
     private findQuestsForPlayer(candidates: Quest[], player: PlayerDAO): Quest[] {
         this.logQuestCandidates(`Initial candidates for player ${JSON.stringify(player)}`, candidates);
+        // TEST
+        player.questsComplete = ['SING','SDU1','KUA1'];
+        // END TEST
         const filteredCandidates = candidates.filter(q =>
             !player.questsComplete ||
             (player.questsComplete as string[]).includes(q.id) === false);
@@ -377,27 +380,30 @@ class EventService {
                 continue;
             }
             const preconditionList = candidate.preconditionsQuest.split(',').map(q => q.trim());
+
             for (const questId of preconditionList) {
                 if (questId.endsWith('*')) {
                     const prefix = questId.substring(0, questId.length - 1);
                     if (player.questsComplete && (player.questsComplete as string[]).find(q => q.startsWith(prefix))) {
-                        candidatesAfterQuestPreconditions.push(candidate);
+                        if(candidatesAfterQuestPreconditions.includes(candidate) === false) {
+                            candidatesAfterQuestPreconditions.push(candidate);
+                        }
                     }
                     continue;
                 }
-                if (questId.startsWith('!')) {
+                else if (questId.startsWith('!')) {
                     const negatedQuestId = questId.substring(1);
                     if (player.questsComplete && (player.questsComplete as string[]).includes(negatedQuestId)) {
-                        const questIndex = candidatesAfterQuestPreconditions.findIndex(q => q.id === negatedQuestId);
+                        const questIndex = candidatesAfterQuestPreconditions.findIndex(q => q.id === candidate.id);
                         if (questIndex > -1) {
-                            candidatesAfterQuestPreconditions.splice(questIndex)
+                            candidatesAfterQuestPreconditions.splice(questIndex, 1);
                         }
                     }
                 }
-
-                if (player.questsComplete && (player.questsComplete as string[]).includes(questId)) {
-                    candidatesAfterQuestPreconditions.push(candidate);
-                    break;
+                else if (player.questsComplete && (player.questsComplete as string[]).includes(questId)) {
+                    if(candidatesAfterQuestPreconditions.includes(candidate) === false) {
+                        candidatesAfterQuestPreconditions.push(candidate);
+                    }
                 }
             }
         }
@@ -509,16 +515,20 @@ class EventService {
                 currentLocation: playerQuest.currentLocation,
             }, { merge: true });
 
+            console.log(`Checking for radio playlist ${quest.stages[nextStageIndex - 1].radioId} and ${quest.stages[nextStageIndex - 1].radioPlaylistName}`);
             if (quest.stages[nextStageIndex - 1].radioId && quest.stages[nextStageIndex - 1].radioPlaylistName) {
                 let radioId = quest.stages[nextStageIndex - 1].radioId;
-                if (radioId === 'HOME' && playerQuest.homeRadio) {
+                if (radioId === 'R HOME' && playerQuest.homeRadio) {
                     radioId = playerQuest.homeRadio;
                     console.log(`Using ${playerQuest.homeRadio} instead of 'HOME'`);
                 }
-                if (radioId !== 'HOME') {
+                if (radioId !== 'R HOME') {
                     console.log(`Setting playlist ${quest.stages[nextStageIndex - 1].radioPlaylistName} for radio ${radioId}.`)
                     await this.dataContext.playerQuests.doc(radioId).set(
                         { playerId: radioId, playlistName: quest.stages[nextStageIndex - 1].radioPlaylistName }, { merge: true });
+                }
+                else {
+                    console.log('No home radio found.');
                 }
             }
 

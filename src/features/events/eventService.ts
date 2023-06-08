@@ -6,6 +6,13 @@ import GameDataService from '../gameData/gameDataService';
 import { PlayerQuestDAO, PlayerQuestStage, Quest } from '../../typings/quest';
 import { PlayerDAO } from '../../typings/player';
 
+type CoolDown = {
+    questId: string,
+    cooldownUntil: Date,
+};
+
+const coolDowns: CoolDown[] = [];
+
 class EventService {
     constructor(private dataContext: DataContext, private gameData: GameDataService) { }
 
@@ -88,12 +95,12 @@ class EventService {
         if (!quest) {
             throw new Error(`Quest with id ${questId} could not be found!`);
         }
-        if (quest.stages.length === 0) {
+        if (!quest.stages || quest.stages.length === 0) {
             throw new Error(`Quest with id ${questId} does not have any stages.`);
         }
         const players = await this.gameData.getPlayers();
         const player = players.find((p) => p.id === playerId);
-        if (!player) {
+        if (!player && !playerId.startsWith('R')) {
             throw new Error(`Player with id ${playerId} could not be found!`);
         }
 
@@ -113,12 +120,25 @@ class EventService {
             currentLocation: '',
             stageCount: quest.stages.length,
             delaySeconds: firstStage.sleepTime ?? 0,
-            homeOffice: player.homeOffice,
+            homeOffice: player?.homeOffice ?? '',
             npcName: firstStage.npcName,
-            homeRadio: player.homeRadio,
+            homeRadio: player?.homeRadio ?? '',
         };
         console.log(`Creating/Updating quest for player with id ${playerId}`);
         await this.dataContext.playerQuests.doc(playerId).set(playerQuest);
+        if (quest.cooldownTimeMinutes && !isNaN(quest.cooldownTimeMinutes)) {
+            const existingCooldown = coolDowns.find(q => q.questId === quest.id);
+            const now = new Date();
+            if (existingCooldown) {
+                existingCooldown.cooldownUntil = this.addMinutes(now, quest.cooldownTimeMinutes);
+            }
+            else {
+                coolDowns.push({
+                    questId: quest.id,
+                    cooldownUntil: this.addMinutes(now, quest.cooldownTimeMinutes),
+                });
+            }
+        }
 
         await this.dataContext.players.doc(playerQuest.playerId).set({
             id: playerQuest.playerId,
@@ -240,9 +260,6 @@ class EventService {
                     feedbackCount: 0,
                 };
             }
-            if (playerDao.questActive) {
-                return [];
-            }
 
             let allQuests = await this.gameData.getQuests();
             if (phaseId) {
@@ -269,8 +286,7 @@ class EventService {
                 .limit(1);
         } else {
             query = await this.dataContext.playerQuests
-                .where('triggerIds', 'array-contains', event.sensorId)
-                .limit(1);
+                .where('triggerIds', 'array-contains', event.sensorId);
         }
 
         const results = await query.get();
@@ -357,9 +373,6 @@ class EventService {
 
     private findQuestsForPlayer(candidates: Quest[], player: PlayerDAO): Quest[] {
         this.logQuestCandidates(`Initial candidates for player ${JSON.stringify(player)}`, candidates);
-        // TEST
-        player.questsComplete = ['SING','SDU1','KUA1'];
-        // END TEST
         const filteredCandidates = candidates.filter(q =>
             !player.questsComplete ||
             (player.questsComplete as string[]).includes(q.id) === false);
@@ -375,17 +388,17 @@ class EventService {
 
         const candidatesAfterQuestPreconditions: Quest[] = [];
         for (const candidate of candidatesAfterPlayerPreconditions) {
-            if (!candidate.preconditionsQuest) {
+            if (!candidate.preconditionsQuest || !candidate.preconditionsQuest.trim()) {
                 candidatesAfterQuestPreconditions.push(candidate);
                 continue;
             }
-            const preconditionList = candidate.preconditionsQuest.split(',').map(q => q.trim());
+            const preconditionList = candidate.preconditionsQuest.trim().split(',').map(q => q.trim());
 
             for (const questId of preconditionList) {
                 if (questId.endsWith('*')) {
                     const prefix = questId.substring(0, questId.length - 1);
                     if (player.questsComplete && (player.questsComplete as string[]).find(q => q.startsWith(prefix))) {
-                        if(candidatesAfterQuestPreconditions.includes(candidate) === false) {
+                        if (candidatesAfterQuestPreconditions.includes(candidate) === false) {
                             candidatesAfterQuestPreconditions.push(candidate);
                         }
                     }
@@ -401,19 +414,32 @@ class EventService {
                     }
                 }
                 else if (player.questsComplete && (player.questsComplete as string[]).includes(questId)) {
-                    if(candidatesAfterQuestPreconditions.includes(candidate) === false) {
+                    if (candidatesAfterQuestPreconditions.includes(candidate) === false) {
                         candidatesAfterQuestPreconditions.push(candidate);
                     }
                 }
             }
         }
-        this.logQuestCandidates(`Playable after quest preconditions for ${player.id}`, candidatesAfterQuestPreconditions);
+        // this.logQuestCandidates(`Playable after quest preconditions for ${player.id}`, candidatesAfterQuestPreconditions);
 
-        if (candidatesAfterQuestPreconditions.length === 0) {
+        const candidatesAfterCooldowns: Quest[] = [];
+        const now = new Date();
+        for(const candidate of candidatesAfterQuestPreconditions) {
+            const coolDown = coolDowns.find(cd => cd.questId === candidate.id);
+            if(coolDown && now < coolDown.cooldownUntil) {
+                console.log(`Skipping quest ${candidate.id}, because it's still cooling down until ${coolDown.cooldownUntil}`);
+            }
+            else {
+                candidatesAfterCooldowns.push(candidate);
+            }
+        }
+        this.logQuestCandidates(`Playable after all preconditions for ${player.id}`, candidatesAfterCooldowns);
+
+        if (candidatesAfterCooldowns.length === 0) {
             return [];
         }
 
-        return candidatesAfterQuestPreconditions;
+        return candidatesAfterCooldowns;
     }
 
     private getPlayerIds(preconditions: string): string[] {
@@ -698,6 +724,10 @@ class EventService {
             eventDateUtc: event.eventDateUtc.toDate().toISOString(),
         };
     };
+
+    private addMinutes = (date: Date, minutes: number) => {
+        return new Date(date.getTime() + minutes * 60000);
+    }
 }
 
 export default EventService;

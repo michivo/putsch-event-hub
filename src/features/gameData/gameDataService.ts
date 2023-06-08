@@ -18,7 +18,7 @@ class GameDataService {
             this.lastPlayers = players;
             return players;
         }
-        if(!this.lastPlayers) {
+        if (!this.lastPlayers) {
             players = await getPlayers();
             this.cache.set('players', players, 120);
             this.lastPlayers = players;
@@ -30,22 +30,29 @@ class GameDataService {
     }
 
     async getQuests(): Promise<Quest[]> {
-        let quests = this.cache.get('quests') as Quest[] | null;
-        if (!quests) {
-            if (!this.lastQuests) {
-                quests = await getQuests();
-                this.cache.set('quests', quests, 120);
+        try {
+            let quests = this.cache.get('quests') as Quest[] | null;
+            if (!quests) {
+                if (!this.lastQuests) {
+                    quests = await getQuests();
+                    this.cache.set('quests', quests, 120);
+                    this.lastQuests = quests;
+                    return quests;
+                }
+                else {
+                    this.refreshQuests();
+                    return this.lastQuests;
+                }
+            }
+            else {
                 this.lastQuests = quests;
                 return quests;
             }
-            else {
-                this.refreshQuests();
-                return this.lastQuests;
-            }
         }
-        else {
-            this.lastQuests = quests;
-            return quests;
+        catch(error) {
+            console.error('Error parsing quests:');
+            console.error(error);
+            throw error;
         }
     }
 

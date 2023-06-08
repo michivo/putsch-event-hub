@@ -7,6 +7,7 @@ import healthRouter from './features/health/healthRouter';
 import eventRouter from './features/events/eventRouter';
 import gameDataRouter from './features/gameData/gameDataRouter';
 import playlistRouter from './features/playlists/playlistRouter';
+import audioRouter from './features/audio/audioRouter';
 
 const options: swaggerJSDoc.OAS3Options = {
     definition: {
@@ -50,6 +51,7 @@ router.use('/api/v1/health', healthRouter);
 router.use('/api/v1/events', eventRouter);
 router.use('/api/v1/game-data', gameDataRouter);
 router.use('/api/v1/playlists', playlistRouter);
+router.use('/api/v1/audio', audioRouter);
 
 router.use(errorHandler);
 

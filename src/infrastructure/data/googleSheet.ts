@@ -58,7 +58,7 @@ async function getPlayers(): Promise<Player[]> {
 }
 
 async function getQuests(): Promise<Quest[]> {
-    console.error('Getting quests...');
+    console.log('Getting quests...');
     let rows = await loadData('Quests');
     if (!rows || rows.length < 2) {
         console.log('No data found.');
@@ -73,7 +73,7 @@ async function getQuests(): Promise<Quest[]> {
         const quest: Quest = {
             id: row[0].toString(),
             subNumber: readSubNumber(row[1]),
-            cooldownTimeMinutes: row[15],
+            cooldownTimeMinutes: parseInt(row[15]),
             description: row[6],
             name: row[4],
             parallel: row[14] && row[14].toLowerCase().includes('y'),
@@ -85,15 +85,15 @@ async function getQuests(): Promise<Quest[]> {
             preconditionsQuest: row[8],
             npcs: row[10],
         };
-        for(let colIdx = 16; colIdx <= row.length - 7; colIdx += 13) {
+        for(let colIdx = 16; colIdx <= row.length - 6; colIdx += 13) {
             const stageFields = row.slice(colIdx, colIdx + 13);
-            if(stageFields.length < 7) {
+            if(stageFields.length < 6) {
                 break;
             }
             const stage: QuestStage = {
                 triggerType: stageFields[0],
                 triggerIds: readStringArray(stageFields[1]),
-                name: stageFields[6],
+                name: stageFields.length > 6 ? stageFields[6] : 'No Name',
                 text: stageFields.length > 8 ? stageFields[8] : '',
                 backupTimeSeconds: stageFields.length > 10 ?  parseInt(stageFields[10]) : 0,
                 backupTextId: stageFields.length > 11 ?  stageFields[11] : 11,

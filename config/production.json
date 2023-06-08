@@ -6,6 +6,7 @@
     "collectionNames": {
         "events": "events",
         "playerQuests": "playerQuests",
-        "players": "players"
+        "players": "players",
+        "audioSettings": "audioSettings"
     }
 }

@@ -116,7 +116,7 @@ class EventService {
             playerId: playerId,
             stageIndex: 0,
             questId: questId,
-            playlistName: '',
+            playlistName: playerId.startsWith('R') ? firstStage.playlistName : '',
             currentLocation: '',
             stageCount: quest.stages.length,
             delaySeconds: firstStage.sleepTime ?? 0,

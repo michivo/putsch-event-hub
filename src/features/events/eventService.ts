@@ -527,6 +527,10 @@ class EventService {
             if (playerQuest.triggerIds.includes('HOME')) {
                 playerQuest.triggerIds.push(playerQuest.homeOffice);
             }
+            if (playerQuest.triggerIds.includes('BP HOME') && playerQuest.homeOffice) {
+                const bpTriggerId = playerQuest.homeOffice.replace('Büro', 'BP');
+                playerQuest.triggerIds.push(bpTriggerId);
+            }
             playerQuest.triggerType = quest.stages[nextStageIndex].triggerType;
             playerQuest.name = quest.stages[nextStageIndex].name;
             playerQuest.backupTextId = quest.stages[nextStageIndex].backupTextId;

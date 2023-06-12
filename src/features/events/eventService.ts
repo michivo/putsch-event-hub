@@ -111,7 +111,7 @@ class EventService {
             backupTimeSeconds: firstStage.backupTimeSeconds,
             name: firstStage.name,
             text: '',
-            triggerIds: firstStage.triggerIds,
+            triggerIds: [...firstStage.triggerIds],
             triggerType: firstStage.triggerType,
             playerId: playerId,
             stageIndex: 0,
@@ -124,6 +124,30 @@ class EventService {
             npcName: firstStage.npcName,
             homeRadio: player?.homeRadio ?? '',
         };
+
+        if (playerQuest.triggerIds.includes('HOME') && playerQuest.homeOffice) {
+            playerQuest.triggerIds.push(playerQuest.homeOffice);
+        }
+        if (playerQuest.triggerIds.includes('BP HOME') && playerQuest.homeOffice) {
+            const bpTriggerId = playerQuest.homeOffice.replace('Büro', 'BP');
+            playerQuest.triggerIds.push(bpTriggerId);
+        }
+        // console.log(`Checking for radio playlist ${firstStage.radioId} and ${firstStage.radioPlaylistName}`);
+        // if (firstStage.radioId && firstStage.radioPlaylistName) {
+        //     let radioId = firstStage.radioId;
+        //     if (radioId === 'R HOME' && playerQuest.homeRadio) {
+        //         radioId = playerQuest.homeRadio;
+        //         console.log(`Using ${playerQuest.homeRadio} instead of 'HOME'`);
+        //     }
+        //     if (radioId !== 'R HOME') {
+        //         console.log(`Setting playlist ${firstStage.radioPlaylistName} for radio ${radioId}.`)
+        //         await this.dataContext.playerQuests.doc(radioId).set(
+        //             { playerId: radioId, playlistName: firstStage.radioPlaylistName }, { merge: true });
+        //     }
+        //     else {
+        //         console.log('No home radio found.');
+        //     }
+        // }
         console.log(`Creating/Updating quest for player with id ${playerId}`);
         await this.dataContext.playerQuests.doc(playerId).set(playerQuest);
         if (quest.cooldownTimeMinutes && !isNaN(quest.cooldownTimeMinutes)) {
@@ -325,45 +349,59 @@ class EventService {
 
             await this.updatePlayerLocation(event.playerId, event.sensorId);
 
-            await this.tryStartQuest(event.sensorId);
+            await this.tryStartQuest(event.sensorId, event.playerId);
         }
     };
 
-    private tryStartQuest = async (sensorId: string) => {
+    private tryStartQuest = async (sensorId: string, playerId: string) => {
         const quests = await this.gameData.getQuests();
         const questsStartingAtLocation = quests.filter(q => q.stages.length > 0 &&
             q.stages[0].triggerType === 'ORT' &&
             q.stages[0].triggerIds.length > 0 &&
             q.stages[0].triggerIds.includes(sensorId));
-        console.log(`Found ${questsStartingAtLocation.length} quests starting at location ${sensorId}`);
+        console.log(`Found ${questsStartingAtLocation.length} quests starting at location ${sensorId} for ${playerId ?? 'unknown player'}`);
 
         if (questsStartingAtLocation.length === 0) {
             return;
         }
 
-        const inactivePlayersQuery = await this.dataContext.players
-            .where('currentLocation', '==', sensorId);
+        if (playerId) {
+            const playerDoc = await this.dataContext.players.doc(playerId).get();
+            if (playerDoc.exists) {
+                const playerData = playerDoc.data();
+                if(playerData) {
+                    await this.tryStartQuestForPlayer(questsStartingAtLocation, playerData, sensorId);
+                }
+            }
+        }
+        else {
+            const inactivePlayersQuery = await this.dataContext.players.where('currentLocation', '==', sensorId);
 
-        const inactivePlayers = await inactivePlayersQuery.get();
-        for (const player of inactivePlayers.docs) {
-            const playerData = player.data();
-            if (playerData.questActive) {
-                continue;
+            const inactivePlayers = await inactivePlayersQuery.get();
+            for (const player of inactivePlayers.docs) {
+                const playerData = player.data() as PlayerDAO;
+                this.tryStartQuestForPlayer(questsStartingAtLocation, playerData, sensorId);
             }
-            const questsNotStarted = this.findQuestsForPlayer(questsStartingAtLocation, playerData);
-            if (questsNotStarted.length > 0) {
-                const questNotStarted = questsNotStarted[0];
-                console.log(`Starting new quest ${questNotStarted.id} for player ${playerData.id}`);
-                await this.startQuest(playerData.id, questNotStarted.id);
-                const sensorEvent: Event = {
-                    playerId: player.id,
-                    sensorId,
-                    value: '',
-                    eventDateUtc: '',
-                };
-                this.setDateIfEmpty(sensorEvent);
-                await this.updateGameData(sensorEvent);
-            }
+        }
+    }
+
+    private tryStartQuestForPlayer = async (questsStartingAtLocation: Quest[], playerData: PlayerDAO, sensorId: string) => {
+        if (playerData.questActive) {
+            return;
+        }
+        const questsNotStarted = this.findQuestsForPlayer(questsStartingAtLocation, playerData);
+        if (questsNotStarted.length > 0) {
+            const questNotStarted = questsNotStarted[0];
+            console.log(`Starting new quest ${questNotStarted.id} for player ${playerData.id}`);
+            await this.startQuest(playerData.id, questNotStarted.id);
+            const sensorEvent: Event = {
+                playerId: playerData.id,
+                sensorId,
+                value: '',
+                eventDateUtc: '',
+            };
+            this.setDateIfEmpty(sensorEvent);
+            await this.updateGameData(sensorEvent);
         }
     }
 
@@ -424,9 +462,9 @@ class EventService {
 
         const candidatesAfterCooldowns: Quest[] = [];
         const now = new Date();
-        for(const candidate of candidatesAfterQuestPreconditions) {
+        for (const candidate of candidatesAfterQuestPreconditions) {
             const coolDown = coolDowns.find(cd => cd.questId === candidate.id);
-            if(coolDown && now < coolDown.cooldownUntil) {
+            if (coolDown && now < coolDown.cooldownUntil) {
                 console.log(`Skipping quest ${candidate.id}, because it's still cooling down until ${coolDown.cooldownUntil}`);
             }
             else {
@@ -523,7 +561,7 @@ class EventService {
                 playerQuest.currentLocation = event.sensorId;
             }
             playerQuest.stageIndex = nextStageIndex;
-            playerQuest.triggerIds = quest.stages[nextStageIndex].triggerIds;
+            playerQuest.triggerIds = [...quest.stages[nextStageIndex].triggerIds];
             if (playerQuest.triggerIds.includes('HOME')) {
                 playerQuest.triggerIds.push(playerQuest.homeOffice);
             }
@@ -573,7 +611,7 @@ class EventService {
     }
 
     private startStageDelayed = async (playerId: string, questId: string, stageIndex: number, triggerId: string) => {
-        console.log(`Not implemented - if we can trigger the next stage for ${playerId}/${questId}/${stageIndex}`);
+        console.log(`Check if we can trigger the next stage for ${playerId}/${questId}/${stageIndex}`);
         if (playerId) {
             return;
         }
@@ -600,6 +638,7 @@ class EventService {
             eventDateUtc: new Date().toISOString(),
         };
 
+        console.log(`Delayed start of next stage for ${playerId}/${questId}/${stageIndex}`);
         await this.updatePlayerQuest(currentQuest, quest, event);
         await this.dataContext.playerQuests.doc(playerId).set(currentQuest);
     }

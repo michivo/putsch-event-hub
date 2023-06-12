@@ -31,6 +31,8 @@ const options: swaggerJSDoc.OAS3Options = {
 };
 
 function errorHandler (err: Error, _: express.Request, res: express.Response, next: express.NextFunction) {
+    console.log('Error processing request');
+    console.error(err);
     if (res.headersSent) {
       return next(err);
     }
